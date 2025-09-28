@@ -1,6 +1,6 @@
 package libdecor
-import wl "shared:wayland"
-import xdg "shared:wayland/xdg"
+import wl "../../"
+import xdg "../../xdg"
 
 foreign import libdecor_lib "system:decor-0"
 
@@ -21,16 +21,16 @@ error :: enum {
 	INVALID_FRAME_CONFIGURATION,
 }
 
-window_state_bit :: enum  i32{
-	ACTIVE = 0,
-	MAXIMIZED = 1,
-	FULLSCREEN = 2,
-	TILED_LEFT = 3,
-	TILED_RIGHT = 4,
-	TILED_TOP = 5,
+window_state_bit :: enum i32 {
+	ACTIVE       = 0,
+	MAXIMIZED    = 1,
+	FULLSCREEN   = 2,
+	TILED_LEFT   = 3,
+	TILED_RIGHT  = 4,
+	TILED_TOP    = 5,
 	TILED_BOTTOM = 6,
-	SUSPENDED = 7,
-	RESIZING = 8,
+	SUSPENDED    = 7,
+	RESIZING     = 8,
 }
 window_state :: distinct bit_set[window_state_bit]
 
@@ -47,38 +47,38 @@ resize_edge :: enum {
 }
 
 capabilities_bit :: enum {
-	MOVE = 0,
-	RESIZE = 1,
-	MINIMIZE = 2,
+	MOVE       = 0,
+	RESIZE     = 1,
+	MINIMIZE   = 2,
 	FULLSCREEN = 3,
-	CLOSE = 4,
+	CLOSE      = 4,
 }
 capabilities :: distinct bit_set[capabilities_bit]
 
 
 wm_capabilities_bit :: enum {
 	WINDOW_MENU = 0,
-	MAXIMIZE = 1,
-	FULLSCREEN = 2,
-	MINIMIZE = 3
+	MAXIMIZE    = 1,
+	FULLSCREEN  = 2,
+	MINIMIZE    = 3,
 }
 wm_capabilities :: distinct bit_set[wm_capabilities_bit]
 interface :: struct {
 	/**
 	 * An error event
 	 */
-	error : proc "c" (instance: ^instance, error: error, message: cstring),
+	error:     proc "c" (instance: ^instance, error: error, message: cstring),
 	/* Reserved */
-	reserved0 : proc "c" (),
-	reserved1 : proc "c" (),
-	reserved2 : proc "c" (),
-	reserved3 : proc "c" (),
-	reserved4 : proc "c" (),
-	reserved5 : proc "c" (),
-	reserved6 : proc "c" (),
-	reserved7 : proc "c" (),
-	reserved8 : proc "c" (),
-	reserved9 : proc "c" (),
+	reserved0: proc "c" (),
+	reserved1: proc "c" (),
+	reserved2: proc "c" (),
+	reserved3: proc "c" (),
+	reserved4: proc "c" (),
+	reserved5: proc "c" (),
+	reserved6: proc "c" (),
+	reserved7: proc "c" (),
+	reserved8: proc "c" (),
+	reserved9: proc "c" (),
 }
 
 /**
@@ -90,55 +90,46 @@ frame_interface :: struct {
 	 * this by creating a suitable state, and apply it using
 	 * frame_commit.
 	 */
-	configure : proc "c" (frame: ^frame,
-			   configuration: ^configuration,
-			   user_data: rawptr),
+	configure:     proc "c" (frame: ^frame, configuration: ^configuration, user_data: rawptr),
 
 	/**
 	 * The window was requested to be closed by the compositor.
 	 */
-	close : proc "c" (frame: ^frame,
-		       user_data: rawptr),
+	close:         proc "c" (frame: ^frame, user_data: rawptr),
 
 	/**
 	 * The window decoration asked to have the main surface to be
 	 * committed. This is required when the decoration is implemented using
 	 * synchronous subsurfaces.
 	 */
-	commit : proc "c" (frame: ^frame,
-			user_data: rawptr),
+	commit:        proc "c" (frame: ^frame, user_data: rawptr),
 
 	/**
 	 * Any mapped popup that has a grab on the given seat should be
 	 * dismissed.
 	 */
-	dismiss_popup : proc "c" (frame: ^frame,
-			       seat_name: cstring,
-			       user_data: rawptr),
+	dismiss_popup: proc "c" (frame: ^frame, seat_name: cstring, user_data: rawptr),
 
 	/**
 	 * The recommended client region bounds for the window.
 	 * This will be followed by a configure event.
 	 */
-	bounds : proc "c" (frame: ^frame,
-			width: int,
-			height: int,
-			user_data: rawptr),
+	bounds:        proc "c" (frame: ^frame, width: int, height: int, user_data: rawptr),
 
 	/* Reserved */
-	reserved0 : proc "c" (),
-	reserved1 : proc "c" (),
-	reserved2 : proc "c" (),
-	reserved3 : proc "c" (),
-	reserved4 : proc "c" (),
-	reserved5 : proc "c" (),
-	reserved6 : proc "c" (),
-	reserved7 : proc "c" (),
-	reserved8 : proc "c" (),
+	reserved0:     proc "c" (),
+	reserved1:     proc "c" (),
+	reserved2:     proc "c" (),
+	reserved3:     proc "c" (),
+	reserved4:     proc "c" (),
+	reserved5:     proc "c" (),
+	reserved6:     proc "c" (),
+	reserved7:     proc "c" (),
+	reserved8:     proc "c" (),
 }
 
-@(default_calling_convention="c")
-@(link_prefix="libdecor_")
+@(default_calling_convention = "c")
+@(link_prefix = "libdecor_")
 foreign libdecor_lib {
 	/**
 	 * Remove a reference to the libdecor instance. When the reference count
@@ -149,15 +140,12 @@ foreign libdecor_lib {
 	/**
 	 * Create a new libdecor context for the given wl_display.
 	 */
-	new :: proc(display: ^wl.display,
-		     iface: ^interface) -> ^instance ---
+	new :: proc(display: ^wl.display, iface: ^interface) -> ^instance ---
 
 	/**
 	 * Create a new libdecor context for the given wl_display and attach user data.
 	 */
-	new_with_user_data :: proc(display: ^wl.display,
-		     iface: ^interface,
-		     user_data: rawptr) -> ^instance ---
+	new_with_user_data :: proc(display: ^wl.display, iface: ^interface, user_data: rawptr) -> ^instance ---
 
 	/**
 	 * Get the user data associated with this libdecor context.
@@ -181,8 +169,7 @@ foreign libdecor_lib {
 	 * the file descriptor returned by get_fd(). If timeout is zero, this
 	 * function will never block.
 	 */
-	dispatch :: proc(instance: ^instance,
-			  timeout: int) -> int ---
+	dispatch :: proc(instance: ^instance, timeout: int) -> int ---
 
 	/**
 	 * Decorate the given content wl_surface.
@@ -195,10 +182,7 @@ foreign libdecor_lib {
 	 * The passed wl_surface should only contain actual application content,
 	 * without any window decoration.
 	 */
-	decorate :: proc(instance: ^instance,
-			  surface: ^wl.surface,
-			  iface: ^frame_interface,
-			  user_data: rawptr) -> ^frame ---
+	decorate :: proc(instance: ^instance, surface: ^wl.surface, iface: ^frame_interface, user_data: rawptr) -> ^frame ---
 
 	/**
 	 * Add a reference to the frame object.
@@ -227,8 +211,7 @@ foreign libdecor_lib {
 	 * If an application wants to be borderless, it can set the frame visibility to
 	 * false.
 	 */
-	frame_set_visibility :: proc(frame: ^frame,
-				      visible: bool) ---
+	frame_set_visibility :: proc(frame: ^frame, visible: bool) ---
 
 	/**
 	 * Get the visibility of the frame.
@@ -242,14 +225,12 @@ foreign libdecor_lib {
 	 * This can be used to stack multiple toplevel windows above or under each
 	 * other.
 	 */
-	frame_set_parent :: proc(frame_: ^frame,
-				  parent: ^frame) ---
+	frame_set_parent :: proc(frame_: ^frame, parent: ^frame) ---
 
 	/**
 	 * Set the title of the window.
 	 */
-	frame_set_title :: proc(frame: ^frame,
-				 title: cstring) ---
+	frame_set_title :: proc(frame: ^frame, title: cstring) ---
 
 	/**
 	 * Get the title of the window.
@@ -259,8 +240,7 @@ foreign libdecor_lib {
 	/**
 	 * Set the application ID of the window.
 	 */
-	frame_set_app_id :: proc(frame: ^frame,
-				  app_id: cstring) ---
+	frame_set_app_id :: proc(frame: ^frame, app_id: cstring) ---
 
 	/**
 	 * Set new capabilities of the window.
@@ -270,44 +250,35 @@ foreign libdecor_lib {
 	 *
 	 * Setting a capability does not implicitly unset any other.
 	 */
-	frame_set_capabilities :: proc(frame: ^frame,
-					capabilities: capabilities) ---
+	frame_set_capabilities :: proc(frame: ^frame, capabilities: capabilities) ---
 
 	/**
 	 * Unset capabilities of the window.
 	 *
 	 * The opposite of frame_set_capabilities.
 	 */
-	frame_unset_capabilities :: proc(frame: ^frame,
-					  capabilities: capabilities) ---
+	frame_unset_capabilities :: proc(frame: ^frame, capabilities: capabilities) ---
 
 	/**
 	 * Check whether the window has any of the given capabilities.
 	 */
-	frame_has_capability :: proc(frame: ^frame,
-				      capabality: capabilities) -> bool ---
+	frame_has_capability :: proc(frame: ^frame, capabality: capabilities) -> bool ---
 
 	/**
 	 * Show the window menu.
 	 */
-	frame_show_window_menu :: proc(frame: ^frame,
-					wl_seat: wl.seat,
-					serial: u32,
-					x: int,
-					y: int) ---
+	frame_show_window_menu :: proc(frame: ^frame, wl_seat: wl.seat, serial: u32, x: int, y: int) ---
 
 	/**
 	 * Issue a popup grab on the window. Call this when a xdg_popup is mapped, so
 	 * that it can be properly dismissed by the decorations.
 	 */
-	frame_popup_grab :: proc(frame: ^frame,
-				  seat_name: cstring) ---
+	frame_popup_grab :: proc(frame: ^frame, seat_name: cstring) ---
 
 	/**
 	 * Release the popup grab. Call this when you unmap a popup.
 	 */
-	frame_popup_ungrab :: proc(frame: ^frame,
-				    seat_name: cstring) ---
+	frame_popup_ungrab :: proc(frame: ^frame, seat_name: cstring) ---
 
 	/**
 	 * Translate content surface local coordinates to toplevel window local
@@ -316,71 +287,52 @@ foreign libdecor_lib {
 	 * This can be used to translate surface coordinates to coordinates useful for
 	 * e.g. showing the window menu, or positioning a popup.
 	 */
-	frame_translate_coordinate :: proc(frame: ^frame,
-					    surface_x: int,
-					    surface_y: int,
-					    frame_x: ^int,
-					    frame_y: ^int) ---
+	frame_translate_coordinate :: proc(frame: ^frame, surface_x: int, surface_y: int, frame_x: ^int, frame_y: ^int) ---
 
 	/**
 	 * Set the min content size.
 	 *
 	 * This translates roughly to xdg_toplevel_set_min_size().
 	 */
-	frame_set_min_content_size :: proc(frame: ^frame,
-					    content_width: int,
-					    content_height: int) ---
+	frame_set_min_content_size :: proc(frame: ^frame, content_width: int, content_height: int) ---
 
 	/**
 	 * Set the max content size.
 	 *
 	 * This translates roughly to xdg_toplevel_set_max_size().
 	 */
-	frame_set_max_content_size :: proc(frame: ^frame,
-					    content_width: int,
-					    content_height: int) ---
+	frame_set_max_content_size :: proc(frame: ^frame, content_width: int, content_height: int) ---
 
 	/**
 	 * Get the min content size.
 	 */
-	frame_get_min_content_size :: proc(frame: ^frame,
-					    content_width: ^int,
-					    content_height: ^int) ---
+	frame_get_min_content_size :: proc(frame: ^frame, content_width: ^int, content_height: ^int) ---
 
 	/**
 	 * Get the max content size.
 	 */
-	frame_get_max_content_size :: proc(frame: ^frame,
-					    content_width: ^int,
-					    content_height: ^int) ---
+	frame_get_max_content_size :: proc(frame: ^frame, content_width: ^int, content_height: ^int) ---
 
 	/**
 	 * Initiate an interactive resize.
 	 *
 	 * This roughly translates to xdg_toplevel_resize().
 	 */
-	frame_resize :: proc(frame: ^frame,
-			      wl_seat: wl.seat,
-			      serial: u32,
-			      edge: resize_edge) ---
+	frame_resize :: proc(frame: ^frame, wl_seat: wl.seat, serial: u32, edge: resize_edge) ---
 
 	/**
 	 * Initiate an interactive move.
 	 *
 	 * This roughly translates to xdg_toplevel_move().
 	 */
-	frame_move :: proc(frame: ^frame,
-			    wl_seat: wl.seat,
-			    serial: u32) ---
+	frame_move :: proc(frame: ^frame, wl_seat: wl.seat, serial: u32) ---
 
 	/**
 	 * Commit a new window state. This can be called on application driven resizes
 	 * when the window is floating, or in response to received configurations, i.e.
 	 * from e.g. interactive resizes or state changes.
 	 */
-	frame_commit :: proc(frame: ^frame,
-			      state: ^state,
-			      configuration: ^configuration) ---
+	frame_commit :: proc(frame: ^frame, state: ^state, configuration: ^configuration) ---
 
 	/**
 	 * Minimize the window.
@@ -408,8 +360,7 @@ foreign libdecor_lib {
 	 *
 	 * Roughly translates to xdg_toplevel_set_fullscreen().
 	 */
-	frame_set_fullscreen :: proc(frame: ^frame,
-				      output: ^wl.output) ---
+	frame_set_fullscreen :: proc(frame: ^frame, output: ^wl.output) ---
 
 	/**
 	 * Unfullscreen the window.
@@ -469,8 +420,7 @@ foreign libdecor_lib {
 	/**
 	 * Create a new content surface state.
 	 */
-	state_new :: proc(width: int,
-			   height: int) -> ^state ---
+	state_new :: proc(width: int, height: int) -> ^state ---
 
 	/**
 	 * Free a content surface state.
@@ -482,10 +432,7 @@ foreign libdecor_lib {
 	 *
 	 * If the configuration doesn't contain a size, false is returned.
 	 */
-	configuration_get_content_size :: proc(configuration: ^configuration,
-						frame: ^frame,
-						width: ^int,
-						height: ^int) -> bool ---
+	configuration_get_content_size :: proc(configuration: ^configuration, frame: ^frame, width: ^int, height: ^int) -> bool ---
 
 	/**
 	 * Get the window state for this configuration.
@@ -494,7 +441,7 @@ foreign libdecor_lib {
 	 * returned, and the application should assume the window state remains
 	 * unchanged.
 	 */
-	configuration_get_window_state :: proc(configuration: ^configuration,
-						window_state: ^window_state) -> bool ---
+	configuration_get_window_state :: proc(configuration: ^configuration, window_state: ^window_state) -> bool ---
 
 }
+

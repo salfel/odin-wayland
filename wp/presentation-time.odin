@@ -34,11 +34,11 @@ presentation_time_types := []^interface {
       when the compositor misses its target vertical blanking period. */
 presentation :: struct {}
 presentation_set_user_data :: proc "contextless" (presentation_: ^presentation, user_data: rawptr) {
-   proxy_set_user_data(cast(^proxy)presentation_, user_data)
+	proxy_set_user_data(cast(^proxy)presentation_, user_data)
 }
 
 presentation_get_user_data :: proc "contextless" (presentation_: ^presentation) -> rawptr {
-   return proxy_get_user_data(cast(^proxy)presentation_)
+	return proxy_get_user_data(cast(^proxy)presentation_)
 }
 
 /* Informs the server that the client will no longer be using
@@ -46,7 +46,13 @@ presentation_get_user_data :: proc "contextless" (presentation_: ^presentation) 
         are not affected. */
 PRESENTATION_DESTROY :: 0
 presentation_destroy :: proc "contextless" (presentation_: ^presentation) {
-	proxy_marshal_flags(cast(^proxy)presentation_, PRESENTATION_DESTROY, nil, proxy_get_version(cast(^proxy)presentation_), 1)
+	proxy_marshal_flags(
+		cast(^proxy)presentation_,
+		PRESENTATION_DESTROY,
+		nil,
+		proxy_get_version(cast(^proxy)presentation_),
+		1,
+	)
 }
 
 /* Request presentation feedback for the current content submission
@@ -58,13 +64,24 @@ presentation_destroy :: proc "contextless" (presentation_: ^presentation) {
         For details on what information is returned, see the
         presentation_feedback interface. */
 PRESENTATION_GET_FEEDBACK :: 1
-presentation_get_feedback :: proc "contextless" (presentation_: ^presentation, surface_: ^wl.surface) -> ^presentation_feedback {
-	ret := proxy_marshal_flags(cast(^proxy)presentation_, PRESENTATION_GET_FEEDBACK, &presentation_feedback_interface, proxy_get_version(cast(^proxy)presentation_), 0, nil, surface_)
+presentation_get_feedback :: proc "contextless" (
+	presentation_: ^presentation,
+	surface_: ^wl.surface,
+) -> ^presentation_feedback {
+	ret := proxy_marshal_flags(
+		cast(^proxy)presentation_,
+		PRESENTATION_GET_FEEDBACK,
+		&presentation_feedback_interface,
+		proxy_get_version(cast(^proxy)presentation_),
+		0,
+		nil,
+		surface_,
+	)
 	return cast(^presentation_feedback)ret
 }
 
 presentation_listener :: struct {
-/* This event tells the client in which clock domain the
+	/* This event tells the client in which clock domain the
         compositor interprets the timestamps used by the presentation
         extension. This clock is called the presentation clock.
 
@@ -92,17 +109,20 @@ presentation_listener :: struct {
         irrelevant. Precision of one millisecond or better is
         recommended. Clients must be able to query the current clock
         value directly, not by asking the compositor. */
-	clock_id : proc "c" (data: rawptr, presentation: ^presentation, clk_id_: uint),
-
+	clock_id: proc "c" (data: rawptr, presentation: ^presentation, clk_id_: uint),
 }
-presentation_add_listener :: proc "contextless" (presentation_: ^presentation, listener: ^presentation_listener, data: rawptr) {
-	proxy_add_listener(cast(^proxy)presentation_, cast(^generic_c_call)listener,data)
+presentation_add_listener :: proc "contextless" (
+	presentation_: ^presentation,
+	listener: ^presentation_listener,
+	data: rawptr,
+) {
+	proxy_add_listener(cast(^proxy)presentation_, cast(^generic_c_call)listener, data)
 }
 /* These fatal protocol errors may be emitted in response to
         illegal presentation requests. */
 presentation_error :: enum {
 	invalid_timestamp = 0,
-	invalid_flag = 1,
+	invalid_flag      = 1,
 }
 @(private)
 presentation_requests := []message {
@@ -111,11 +131,9 @@ presentation_requests := []message {
 }
 
 @(private)
-presentation_events := []message {
-	{"clock_id", "u", raw_data(presentation_time_types)[0:]},
-}
+presentation_events := []message{{"clock_id", "u", raw_data(presentation_time_types)[0:]}}
 
-presentation_interface : interface
+presentation_interface: interface
 
 /* A presentation_feedback object returns an indication that a
       wl_surface content update has become visible to the user.
@@ -129,20 +147,23 @@ presentation_interface : interface
       Once a presentation_feedback object has delivered a 'presented'
       or 'discarded' event it is automatically destroyed. */
 presentation_feedback :: struct {}
-presentation_feedback_set_user_data :: proc "contextless" (presentation_feedback_: ^presentation_feedback, user_data: rawptr) {
-   proxy_set_user_data(cast(^proxy)presentation_feedback_, user_data)
+presentation_feedback_set_user_data :: proc "contextless" (
+	presentation_feedback_: ^presentation_feedback,
+	user_data: rawptr,
+) {
+	proxy_set_user_data(cast(^proxy)presentation_feedback_, user_data)
 }
 
 presentation_feedback_get_user_data :: proc "contextless" (presentation_feedback_: ^presentation_feedback) -> rawptr {
-   return proxy_get_user_data(cast(^proxy)presentation_feedback_)
+	return proxy_get_user_data(cast(^proxy)presentation_feedback_)
 }
 
 presentation_feedback_destroy :: proc "contextless" (presentation_feedback_: ^presentation_feedback) {
-   proxy_destroy(cast(^proxy)presentation_feedback_)
+	proxy_destroy(cast(^proxy)presentation_feedback_)
 }
 
 presentation_feedback_listener :: struct {
-/* As presentation can be synchronized to only one output at a
+	/* As presentation can be synchronized to only one output at a
         time, this event tells which output it was. This event is only
         sent prior to the presented event.
 
@@ -150,9 +171,9 @@ presentation_feedback_listener :: struct {
         times, this event is sent for each bound instance that matches
         the synchronized output. If a client has not bound to the
         right wl_output global at all, this event is not sent. */
-	sync_output : proc "c" (data: rawptr, presentation_feedback: ^presentation_feedback, output_: ^wl.output),
+	sync_output: proc "c" (data: rawptr, presentation_feedback: ^presentation_feedback, output_: ^wl.output),
 
-/* The associated content update was displayed to the user at the
+	/* The associated content update was displayed to the user at the
         indicated time (tv_sec_hi/lo, tv_nsec). For the interpretation of
         the timestamp, see presentation.clock_id event.
 
@@ -196,24 +217,37 @@ presentation_feedback_listener :: struct {
         refresh cycle, or the output device is self-refreshing without
         a way to query the refresh count, then the arguments seq_hi
         and seq_lo must be zero. */
-	presented : proc "c" (data: rawptr, presentation_feedback: ^presentation_feedback, tv_sec_hi_: uint, tv_sec_lo_: uint, tv_nsec_: uint, refresh_: uint, seq_hi_: uint, seq_lo_: uint, flags_: presentation_feedback_kind),
+	presented:   proc "c" (
+		data: rawptr,
+		presentation_feedback: ^presentation_feedback,
+		tv_sec_hi_: uint,
+		tv_sec_lo_: uint,
+		tv_nsec_: uint,
+		refresh_: uint,
+		seq_hi_: uint,
+		seq_lo_: uint,
+		flags_: presentation_feedback_kind,
+	),
 
-/* The content update was never displayed to the user. */
-	discarded : proc "c" (data: rawptr, presentation_feedback: ^presentation_feedback),
-
+	/* The content update was never displayed to the user. */
+	discarded:   proc "c" (data: rawptr, presentation_feedback: ^presentation_feedback),
 }
-presentation_feedback_add_listener :: proc "contextless" (presentation_feedback_: ^presentation_feedback, listener: ^presentation_feedback_listener, data: rawptr) {
-	proxy_add_listener(cast(^proxy)presentation_feedback_, cast(^generic_c_call)listener,data)
+presentation_feedback_add_listener :: proc "contextless" (
+	presentation_feedback_: ^presentation_feedback,
+	listener: ^presentation_feedback_listener,
+	data: rawptr,
+) {
+	proxy_add_listener(cast(^proxy)presentation_feedback_, cast(^generic_c_call)listener, data)
 }
 /* These flags provide information about how the presentation of
         the related content update was done. The intent is to help
         clients assess the reliability of the feedback and the visual
         quality with respect to possible tearing and timings. */
 presentation_feedback_kind :: enum {
-	vsync = 0x1,
-	hw_clock = 0x2,
+	vsync         = 0x1,
+	hw_clock      = 0x2,
 	hw_completion = 0x4,
-	zero_copy = 0x8,
+	zero_copy     = 0x8,
 }
 @(private)
 presentation_feedback_events := []message {
@@ -222,7 +256,7 @@ presentation_feedback_events := []message {
 	{"discarded", "", raw_data(presentation_time_types)[0:]},
 }
 
-presentation_feedback_interface : interface
+presentation_feedback_interface: interface
 
 @(private)
 @(init)
@@ -241,7 +275,7 @@ init_interfaces_presentation_time :: proc() {
 }
 
 // Functions from libwayland-client
-import wl "shared:wayland"
+import wl ".."
 fixed_t :: wl.fixed_t
 proxy :: wl.proxy
 message :: wl.message

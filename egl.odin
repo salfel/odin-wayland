@@ -4,8 +4,8 @@ foreign import wl_egl_lib "system:wayland-egl"
 egl_window :: struct {}
 
 
-@(default_calling_convention="c")
-@(link_prefix="wl_")
+@(default_calling_convention = "c")
+@(link_prefix = "wl_")
 foreign wl_egl_lib {
 	egl_window_create :: proc(surface: ^surface, width: int, height: int) -> ^egl_window ---
 
