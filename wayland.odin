@@ -82,11 +82,11 @@ wayland_types := []^interface {
       is used for internal Wayland protocol features. */
 display :: struct {}
 display_set_user_data :: proc "contextless" (display_: ^display, user_data: rawptr) {
-   proxy_set_user_data(cast(^proxy)display_, user_data)
+	proxy_set_user_data(cast(^proxy)display_, user_data)
 }
 
 display_get_user_data :: proc "contextless" (display_: ^display) -> rawptr {
-   return proxy_get_user_data(cast(^proxy)display_)
+	return proxy_get_user_data(cast(^proxy)display_)
 }
 
 /* The sync request asks the server to emit the 'done' event
@@ -102,7 +102,14 @@ display_get_user_data :: proc "contextless" (display_: ^display) -> rawptr {
 	The callback_data passed in the callback is undefined and should be ignored. */
 DISPLAY_SYNC :: 0
 display_sync :: proc "contextless" (display_: ^display) -> ^callback {
-	ret := proxy_marshal_flags(cast(^proxy)display_, DISPLAY_SYNC, &callback_interface, proxy_get_version(cast(^proxy)display_), 0, nil)
+	ret := proxy_marshal_flags(
+		cast(^proxy)display_,
+		DISPLAY_SYNC,
+		&callback_interface,
+		proxy_get_version(cast(^proxy)display_),
+		0,
+		nil,
+	)
 	return cast(^callback)ret
 }
 
@@ -117,37 +124,43 @@ display_sync :: proc "contextless" (display_: ^display) -> ^callback {
 	possible to avoid wasting memory. */
 DISPLAY_GET_REGISTRY :: 1
 display_get_registry :: proc "contextless" (display_: ^display) -> ^registry {
-	ret := proxy_marshal_flags(cast(^proxy)display_, DISPLAY_GET_REGISTRY, &registry_interface, proxy_get_version(cast(^proxy)display_), 0, nil)
+	ret := proxy_marshal_flags(
+		cast(^proxy)display_,
+		DISPLAY_GET_REGISTRY,
+		&registry_interface,
+		proxy_get_version(cast(^proxy)display_),
+		0,
+		nil,
+	)
 	return cast(^registry)ret
 }
 
 display_listener :: struct {
-/* The error event is sent out when a fatal (non-recoverable)
+	/* The error event is sent out when a fatal (non-recoverable)
 	error has occurred.  The object_id argument is the object
 	where the error occurred, most often in response to a request
 	to that object.  The code identifies the error and is defined
 	by the object interface.  As such, each interface defines its
 	own set of error codes.  The message is a brief description
 	of the error, for (debugging) convenience. */
-	error : proc "c" (data: rawptr, display: ^display, object_id_: rawptr, code_: uint, message_: cstring),
+	error:     proc "c" (data: rawptr, display: ^display, object_id_: rawptr, code_: uint, message_: cstring),
 
-/* This event is used internally by the object ID management
+	/* This event is used internally by the object ID management
 	logic. When a client deletes an object that it had created,
 	the server will send this event to acknowledge that it has
 	seen the delete request. When the client receives this event,
 	it will know that it can safely reuse the object ID. */
-	delete_id : proc "c" (data: rawptr, display: ^display, id_: uint),
-
+	delete_id: proc "c" (data: rawptr, display: ^display, id_: uint),
 }
 display_add_listener :: proc "contextless" (display_: ^display, listener: ^display_listener, data: rawptr) {
-	proxy_add_listener(cast(^proxy)display_, cast(^generic_c_call)listener,data)
+	proxy_add_listener(cast(^proxy)display_, cast(^generic_c_call)listener, data)
 }
 /* These errors are global and can be emitted in response to any
 	server request. */
 display_error :: enum {
 	invalid_object = 0,
 	invalid_method = 1,
-	no_memory = 2,
+	no_memory      = 2,
 	implementation = 3,
 }
 @(private)
@@ -162,7 +175,7 @@ display_events := []message {
 	{"delete_id", "u", raw_data(wayland_types)[0:]},
 }
 
-display_interface : interface
+display_interface: interface
 
 /* The singleton global registry object.  The server has a number of
       global objects that are available to all clients.  These objects
@@ -186,11 +199,11 @@ display_interface : interface
       the object. */
 registry :: struct {}
 registry_set_user_data :: proc "contextless" (registry_: ^registry, user_data: rawptr) {
-   proxy_set_user_data(cast(^proxy)registry_, user_data)
+	proxy_set_user_data(cast(^proxy)registry_, user_data)
 }
 
 registry_get_user_data :: proc "contextless" (registry_: ^registry) -> rawptr {
-   return proxy_get_user_data(cast(^proxy)registry_)
+	return proxy_get_user_data(cast(^proxy)registry_)
 }
 
 /* Binds a new, client-created object to the server using the
@@ -202,18 +215,18 @@ registry_bind :: proc "contextless" (registry_: ^registry, name_: uint, id_: ^in
 }
 
 registry_destroy :: proc "contextless" (registry_: ^registry) {
-   proxy_destroy(cast(^proxy)registry_)
+	proxy_destroy(cast(^proxy)registry_)
 }
 
 registry_listener :: struct {
-/* Notify the client of global objects.
+	/* Notify the client of global objects.
 
 	The event notifies the client that a global object with
 	the given name is now available, and it implements the
 	given version of the given interface. */
-	global : proc "c" (data: rawptr, registry: ^registry, name_: uint, interface_: cstring, version_: uint),
+	global:        proc "c" (data: rawptr, registry: ^registry, name_: uint, interface_: cstring, version_: uint),
 
-/* Notify the client of removed global objects.
+	/* Notify the client of removed global objects.
 
 	This event notifies the client that the global identified
 	by name is no longer available.  If the client bound to
@@ -223,16 +236,13 @@ registry_listener :: struct {
 	The object remains valid and requests to the object will be
 	ignored until the client destroys it, to avoid races between
 	the global going away and a client sending a request to it. */
-	global_remove : proc "c" (data: rawptr, registry: ^registry, name_: uint),
-
+	global_remove: proc "c" (data: rawptr, registry: ^registry, name_: uint),
 }
 registry_add_listener :: proc "contextless" (registry_: ^registry, listener: ^registry_listener, data: rawptr) {
-	proxy_add_listener(cast(^proxy)registry_, cast(^generic_c_call)listener,data)
+	proxy_add_listener(cast(^proxy)registry_, cast(^generic_c_call)listener, data)
 }
 @(private)
-registry_requests := []message {
-	{"bind", "usun", raw_data(wayland_types)[0:]},
-}
+registry_requests := []message{{"bind", "usun", raw_data(wayland_types)[0:]}}
 
 @(private)
 registry_events := []message {
@@ -240,7 +250,7 @@ registry_events := []message {
 	{"global_remove", "u", raw_data(wayland_types)[0:]},
 }
 
-registry_interface : interface
+registry_interface: interface
 
 /* Clients can handle the 'done' event to get notified when
       the related request is done.
@@ -249,60 +259,71 @@ registry_interface : interface
       factory interfaces, the wl_callback interface is frozen at version 1. */
 callback :: struct {}
 callback_set_user_data :: proc "contextless" (callback_: ^callback, user_data: rawptr) {
-   proxy_set_user_data(cast(^proxy)callback_, user_data)
+	proxy_set_user_data(cast(^proxy)callback_, user_data)
 }
 
 callback_get_user_data :: proc "contextless" (callback_: ^callback) -> rawptr {
-   return proxy_get_user_data(cast(^proxy)callback_)
+	return proxy_get_user_data(cast(^proxy)callback_)
 }
 
 callback_destroy :: proc "contextless" (callback_: ^callback) {
-   proxy_destroy(cast(^proxy)callback_)
+	proxy_destroy(cast(^proxy)callback_)
 }
 
 callback_listener :: struct {
-/* Notify the client when the related request is done. */
-	done : proc "c" (data: rawptr, callback: ^callback, callback_data_: uint),
-
+	/* Notify the client when the related request is done. */
+	done: proc "c" (data: rawptr, callback: ^callback, callback_data_: uint),
 }
 callback_add_listener :: proc "contextless" (callback_: ^callback, listener: ^callback_listener, data: rawptr) {
-	proxy_add_listener(cast(^proxy)callback_, cast(^generic_c_call)listener,data)
+	proxy_add_listener(cast(^proxy)callback_, cast(^generic_c_call)listener, data)
 }
 @(private)
-callback_events := []message {
-	{"done", "u", raw_data(wayland_types)[0:]},
-}
+callback_events := []message{{"done", "u", raw_data(wayland_types)[0:]}}
 
-callback_interface : interface
+callback_interface: interface
 
 /* A compositor.  This object is a singleton global.  The
       compositor is in charge of combining the contents of multiple
       surfaces into one displayable output. */
 compositor :: struct {}
 compositor_set_user_data :: proc "contextless" (compositor_: ^compositor, user_data: rawptr) {
-   proxy_set_user_data(cast(^proxy)compositor_, user_data)
+	proxy_set_user_data(cast(^proxy)compositor_, user_data)
 }
 
 compositor_get_user_data :: proc "contextless" (compositor_: ^compositor) -> rawptr {
-   return proxy_get_user_data(cast(^proxy)compositor_)
+	return proxy_get_user_data(cast(^proxy)compositor_)
 }
 
 /* Ask the compositor to create a new surface. */
 COMPOSITOR_CREATE_SURFACE :: 0
 compositor_create_surface :: proc "contextless" (compositor_: ^compositor) -> ^surface {
-	ret := proxy_marshal_flags(cast(^proxy)compositor_, COMPOSITOR_CREATE_SURFACE, &surface_interface, proxy_get_version(cast(^proxy)compositor_), 0, nil)
+	ret := proxy_marshal_flags(
+		cast(^proxy)compositor_,
+		COMPOSITOR_CREATE_SURFACE,
+		&surface_interface,
+		proxy_get_version(cast(^proxy)compositor_),
+		0,
+		nil,
+	)
 	return cast(^surface)ret
 }
 
 /* Ask the compositor to create a new region. */
 COMPOSITOR_CREATE_REGION :: 1
 compositor_create_region :: proc "contextless" (compositor_: ^compositor) -> ^region {
-	ret := proxy_marshal_flags(cast(^proxy)compositor_, COMPOSITOR_CREATE_REGION, &region_interface, proxy_get_version(cast(^proxy)compositor_), 0, nil)
+	ret := proxy_marshal_flags(
+		cast(^proxy)compositor_,
+		COMPOSITOR_CREATE_REGION,
+		&region_interface,
+		proxy_get_version(cast(^proxy)compositor_),
+		0,
+		nil,
+	)
 	return cast(^region)ret
 }
 
 compositor_destroy :: proc "contextless" (compositor_: ^compositor) {
-   proxy_destroy(cast(^proxy)compositor_)
+	proxy_destroy(cast(^proxy)compositor_)
 }
 
 @(private)
@@ -311,7 +332,7 @@ compositor_requests := []message {
 	{"create_region", "n", raw_data(wayland_types)[11:]},
 }
 
-compositor_interface : interface
+compositor_interface: interface
 
 /* The wl_shm_pool object encapsulates a piece of memory shared
       between the compositor and client.  Through the wl_shm_pool
@@ -322,11 +343,11 @@ compositor_interface : interface
       a surface or for many small buffers. */
 shm_pool :: struct {}
 shm_pool_set_user_data :: proc "contextless" (shm_pool_: ^shm_pool, user_data: rawptr) {
-   proxy_set_user_data(cast(^proxy)shm_pool_, user_data)
+	proxy_set_user_data(cast(^proxy)shm_pool_, user_data)
 }
 
 shm_pool_get_user_data :: proc "contextless" (shm_pool_: ^shm_pool) -> rawptr {
-   return proxy_get_user_data(cast(^proxy)shm_pool_)
+	return proxy_get_user_data(cast(^proxy)shm_pool_)
 }
 
 /* Create a wl_buffer object from the pool.
@@ -341,8 +362,27 @@ shm_pool_get_user_data :: proc "contextless" (shm_pool_: ^shm_pool) -> rawptr {
 	so it is valid to destroy the pool immediately after creating
 	a buffer from it. */
 SHM_POOL_CREATE_BUFFER :: 0
-shm_pool_create_buffer :: proc "contextless" (shm_pool_: ^shm_pool, offset_: int, width_: int, height_: int, stride_: int, format_: shm_format) -> ^buffer {
-	ret := proxy_marshal_flags(cast(^proxy)shm_pool_, SHM_POOL_CREATE_BUFFER, &buffer_interface, proxy_get_version(cast(^proxy)shm_pool_), 0, nil, offset_, width_, height_, stride_, format_)
+shm_pool_create_buffer :: proc "contextless" (
+	shm_pool_: ^shm_pool,
+	offset_: int,
+	width_: int,
+	height_: int,
+	stride_: int,
+	format_: shm_format,
+) -> ^buffer {
+	ret := proxy_marshal_flags(
+		cast(^proxy)shm_pool_,
+		SHM_POOL_CREATE_BUFFER,
+		&buffer_interface,
+		proxy_get_version(cast(^proxy)shm_pool_),
+		0,
+		nil,
+		offset_,
+		width_,
+		height_,
+		stride_,
+		format_,
+	)
 	return cast(^buffer)ret
 }
 
@@ -368,7 +408,14 @@ shm_pool_destroy :: proc "contextless" (shm_pool_: ^shm_pool) {
 	the new pool size. */
 SHM_POOL_RESIZE :: 2
 shm_pool_resize :: proc "contextless" (shm_pool_: ^shm_pool, size_: int) {
-	proxy_marshal_flags(cast(^proxy)shm_pool_, SHM_POOL_RESIZE, nil, proxy_get_version(cast(^proxy)shm_pool_), 0, size_)
+	proxy_marshal_flags(
+		cast(^proxy)shm_pool_,
+		SHM_POOL_RESIZE,
+		nil,
+		proxy_get_version(cast(^proxy)shm_pool_),
+		0,
+		size_,
+	)
 }
 
 @(private)
@@ -378,7 +425,7 @@ shm_pool_requests := []message {
 	{"resize", "i", raw_data(wayland_types)[0:]},
 }
 
-shm_pool_interface : interface
+shm_pool_interface: interface
 
 /* A singleton global object that provides support for shared
       memory.
@@ -391,11 +438,11 @@ shm_pool_interface : interface
       that can be used for buffers. */
 shm :: struct {}
 shm_set_user_data :: proc "contextless" (shm_: ^shm, user_data: rawptr) {
-   proxy_set_user_data(cast(^proxy)shm_, user_data)
+	proxy_set_user_data(cast(^proxy)shm_, user_data)
 }
 
 shm_get_user_data :: proc "contextless" (shm_: ^shm) -> rawptr {
-   return proxy_get_user_data(cast(^proxy)shm_)
+	return proxy_get_user_data(cast(^proxy)shm_)
 }
 
 /* Create a new wl_shm_pool object.
@@ -405,7 +452,16 @@ shm_get_user_data :: proc "contextless" (shm_: ^shm) -> rawptr {
 	descriptor, to use as backing memory for the pool. */
 SHM_CREATE_POOL :: 0
 shm_create_pool :: proc "contextless" (shm_: ^shm, fd_: int, size_: int) -> ^shm_pool {
-	ret := proxy_marshal_flags(cast(^proxy)shm_, SHM_CREATE_POOL, &shm_pool_interface, proxy_get_version(cast(^proxy)shm_), 0, nil, fd_, size_)
+	ret := proxy_marshal_flags(
+		cast(^proxy)shm_,
+		SHM_CREATE_POOL,
+		&shm_pool_interface,
+		proxy_get_version(cast(^proxy)shm_),
+		0,
+		nil,
+		fd_,
+		size_,
+	)
 	return cast(^shm_pool)ret
 }
 
@@ -419,24 +475,23 @@ shm_release :: proc "contextless" (shm_: ^shm) {
 }
 
 shm_destroy :: proc "contextless" (shm_: ^shm) {
-   proxy_destroy(cast(^proxy)shm_)
+	proxy_destroy(cast(^proxy)shm_)
 }
 
 shm_listener :: struct {
-/* Informs the client about a valid pixel format that
+	/* Informs the client about a valid pixel format that
 	can be used for buffers. Known formats include
 	argb8888 and xrgb8888. */
-	format : proc "c" (data: rawptr, shm: ^shm, format_: shm_format),
-
+	format: proc "c" (data: rawptr, shm: ^shm, format_: shm_format),
 }
 shm_add_listener :: proc "contextless" (shm_: ^shm, listener: ^shm_listener, data: rawptr) {
-	proxy_add_listener(cast(^proxy)shm_, cast(^generic_c_call)listener,data)
+	proxy_add_listener(cast(^proxy)shm_, cast(^generic_c_call)listener, data)
 }
 /* These errors can be emitted in response to wl_shm requests. */
 shm_error :: enum {
 	invalid_format = 0,
 	invalid_stride = 1,
-	invalid_fd = 2,
+	invalid_fd     = 2,
 }
 /* This describes the memory layout of an individual pixel.
 
@@ -451,129 +506,129 @@ shm_error :: enum {
 	For all wl_shm formats and unless specified in another protocol
 	extension, pre-multiplied alpha is used for pixel values. */
 shm_format :: enum {
-	argb8888 = 0,
-	xrgb8888 = 1,
-	c8 = 0x20203843,
-	rgb332 = 0x38424752,
-	bgr233 = 0x38524742,
-	xrgb4444 = 0x32315258,
-	xbgr4444 = 0x32314258,
-	rgbx4444 = 0x32315852,
-	bgrx4444 = 0x32315842,
-	argb4444 = 0x32315241,
-	abgr4444 = 0x32314241,
-	rgba4444 = 0x32314152,
-	bgra4444 = 0x32314142,
-	xrgb1555 = 0x35315258,
-	xbgr1555 = 0x35314258,
-	rgbx5551 = 0x35315852,
-	bgrx5551 = 0x35315842,
-	argb1555 = 0x35315241,
-	abgr1555 = 0x35314241,
-	rgba5551 = 0x35314152,
-	bgra5551 = 0x35314142,
-	rgb565 = 0x36314752,
-	bgr565 = 0x36314742,
-	rgb888 = 0x34324752,
-	bgr888 = 0x34324742,
-	xbgr8888 = 0x34324258,
-	rgbx8888 = 0x34325852,
-	bgrx8888 = 0x34325842,
-	abgr8888 = 0x34324241,
-	rgba8888 = 0x34324152,
-	bgra8888 = 0x34324142,
-	xrgb2101010 = 0x30335258,
-	xbgr2101010 = 0x30334258,
-	rgbx1010102 = 0x30335852,
-	bgrx1010102 = 0x30335842,
-	argb2101010 = 0x30335241,
-	abgr2101010 = 0x30334241,
-	rgba1010102 = 0x30334152,
-	bgra1010102 = 0x30334142,
-	yuyv = 0x56595559,
-	yvyu = 0x55595659,
-	uyvy = 0x59565955,
-	vyuy = 0x59555956,
-	ayuv = 0x56555941,
-	nv12 = 0x3231564e,
-	nv21 = 0x3132564e,
-	nv16 = 0x3631564e,
-	nv61 = 0x3136564e,
-	yuv410 = 0x39565559,
-	yvu410 = 0x39555659,
-	yuv411 = 0x31315559,
-	yvu411 = 0x31315659,
-	yuv420 = 0x32315559,
-	yvu420 = 0x32315659,
-	yuv422 = 0x36315559,
-	yvu422 = 0x36315659,
-	yuv444 = 0x34325559,
-	yvu444 = 0x34325659,
-	r8 = 0x20203852,
-	r16 = 0x20363152,
-	rg88 = 0x38384752,
-	gr88 = 0x38385247,
-	rg1616 = 0x32334752,
-	gr1616 = 0x32335247,
-	xrgb16161616f = 0x48345258,
-	xbgr16161616f = 0x48344258,
-	argb16161616f = 0x48345241,
-	abgr16161616f = 0x48344241,
-	xyuv8888 = 0x56555958,
-	vuy888 = 0x34325556,
-	vuy101010 = 0x30335556,
-	y210 = 0x30313259,
-	y212 = 0x32313259,
-	y216 = 0x36313259,
-	y410 = 0x30313459,
-	y412 = 0x32313459,
-	y416 = 0x36313459,
-	xvyu2101010 = 0x30335658,
-	xvyu12_16161616 = 0x36335658,
-	xvyu16161616 = 0x38345658,
-	y0l0 = 0x304c3059,
-	x0l0 = 0x304c3058,
-	y0l2 = 0x324c3059,
-	x0l2 = 0x324c3058,
-	yuv420_8bit = 0x38305559,
-	yuv420_10bit = 0x30315559,
-	xrgb8888_a8 = 0x38415258,
-	xbgr8888_a8 = 0x38414258,
-	rgbx8888_a8 = 0x38415852,
-	bgrx8888_a8 = 0x38415842,
-	rgb888_a8 = 0x38413852,
-	bgr888_a8 = 0x38413842,
-	rgb565_a8 = 0x38413552,
-	bgr565_a8 = 0x38413542,
-	nv24 = 0x3432564e,
-	nv42 = 0x3234564e,
-	p210 = 0x30313250,
-	p010 = 0x30313050,
-	p012 = 0x32313050,
-	p016 = 0x36313050,
+	argb8888             = 0,
+	xrgb8888             = 1,
+	c8                   = 0x20203843,
+	rgb332               = 0x38424752,
+	bgr233               = 0x38524742,
+	xrgb4444             = 0x32315258,
+	xbgr4444             = 0x32314258,
+	rgbx4444             = 0x32315852,
+	bgrx4444             = 0x32315842,
+	argb4444             = 0x32315241,
+	abgr4444             = 0x32314241,
+	rgba4444             = 0x32314152,
+	bgra4444             = 0x32314142,
+	xrgb1555             = 0x35315258,
+	xbgr1555             = 0x35314258,
+	rgbx5551             = 0x35315852,
+	bgrx5551             = 0x35315842,
+	argb1555             = 0x35315241,
+	abgr1555             = 0x35314241,
+	rgba5551             = 0x35314152,
+	bgra5551             = 0x35314142,
+	rgb565               = 0x36314752,
+	bgr565               = 0x36314742,
+	rgb888               = 0x34324752,
+	bgr888               = 0x34324742,
+	xbgr8888             = 0x34324258,
+	rgbx8888             = 0x34325852,
+	bgrx8888             = 0x34325842,
+	abgr8888             = 0x34324241,
+	rgba8888             = 0x34324152,
+	bgra8888             = 0x34324142,
+	xrgb2101010          = 0x30335258,
+	xbgr2101010          = 0x30334258,
+	rgbx1010102          = 0x30335852,
+	bgrx1010102          = 0x30335842,
+	argb2101010          = 0x30335241,
+	abgr2101010          = 0x30334241,
+	rgba1010102          = 0x30334152,
+	bgra1010102          = 0x30334142,
+	yuyv                 = 0x56595559,
+	yvyu                 = 0x55595659,
+	uyvy                 = 0x59565955,
+	vyuy                 = 0x59555956,
+	ayuv                 = 0x56555941,
+	nv12                 = 0x3231564e,
+	nv21                 = 0x3132564e,
+	nv16                 = 0x3631564e,
+	nv61                 = 0x3136564e,
+	yuv410               = 0x39565559,
+	yvu410               = 0x39555659,
+	yuv411               = 0x31315559,
+	yvu411               = 0x31315659,
+	yuv420               = 0x32315559,
+	yvu420               = 0x32315659,
+	yuv422               = 0x36315559,
+	yvu422               = 0x36315659,
+	yuv444               = 0x34325559,
+	yvu444               = 0x34325659,
+	r8                   = 0x20203852,
+	r16                  = 0x20363152,
+	rg88                 = 0x38384752,
+	gr88                 = 0x38385247,
+	rg1616               = 0x32334752,
+	gr1616               = 0x32335247,
+	xrgb16161616f        = 0x48345258,
+	xbgr16161616f        = 0x48344258,
+	argb16161616f        = 0x48345241,
+	abgr16161616f        = 0x48344241,
+	xyuv8888             = 0x56555958,
+	vuy888               = 0x34325556,
+	vuy101010            = 0x30335556,
+	y210                 = 0x30313259,
+	y212                 = 0x32313259,
+	y216                 = 0x36313259,
+	y410                 = 0x30313459,
+	y412                 = 0x32313459,
+	y416                 = 0x36313459,
+	xvyu2101010          = 0x30335658,
+	xvyu12_16161616      = 0x36335658,
+	xvyu16161616         = 0x38345658,
+	y0l0                 = 0x304c3059,
+	x0l0                 = 0x304c3058,
+	y0l2                 = 0x324c3059,
+	x0l2                 = 0x324c3058,
+	yuv420_8bit          = 0x38305559,
+	yuv420_10bit         = 0x30315559,
+	xrgb8888_a8          = 0x38415258,
+	xbgr8888_a8          = 0x38414258,
+	rgbx8888_a8          = 0x38415852,
+	bgrx8888_a8          = 0x38415842,
+	rgb888_a8            = 0x38413852,
+	bgr888_a8            = 0x38413842,
+	rgb565_a8            = 0x38413552,
+	bgr565_a8            = 0x38413542,
+	nv24                 = 0x3432564e,
+	nv42                 = 0x3234564e,
+	p210                 = 0x30313250,
+	p010                 = 0x30313050,
+	p012                 = 0x32313050,
+	p016                 = 0x36313050,
 	axbxgxrx106106106106 = 0x30314241,
-	nv15 = 0x3531564e,
-	q410 = 0x30313451,
-	q401 = 0x31303451,
-	xrgb16161616 = 0x38345258,
-	xbgr16161616 = 0x38344258,
-	argb16161616 = 0x38345241,
-	abgr16161616 = 0x38344241,
-	c1 = 0x20203143,
-	c2 = 0x20203243,
-	c4 = 0x20203443,
-	d1 = 0x20203144,
-	d2 = 0x20203244,
-	d4 = 0x20203444,
-	d8 = 0x20203844,
-	r1 = 0x20203152,
-	r2 = 0x20203252,
-	r4 = 0x20203452,
-	r10 = 0x20303152,
-	r12 = 0x20323152,
-	avuy8888 = 0x59555641,
-	xvuy8888 = 0x59555658,
-	p030 = 0x30333050,
+	nv15                 = 0x3531564e,
+	q410                 = 0x30313451,
+	q401                 = 0x31303451,
+	xrgb16161616         = 0x38345258,
+	xbgr16161616         = 0x38344258,
+	argb16161616         = 0x38345241,
+	abgr16161616         = 0x38344241,
+	c1                   = 0x20203143,
+	c2                   = 0x20203243,
+	c4                   = 0x20203443,
+	d1                   = 0x20203144,
+	d2                   = 0x20203244,
+	d4                   = 0x20203444,
+	d8                   = 0x20203844,
+	r1                   = 0x20203152,
+	r2                   = 0x20203252,
+	r4                   = 0x20203452,
+	r10                  = 0x20303152,
+	r12                  = 0x20323152,
+	avuy8888             = 0x59555641,
+	xvuy8888             = 0x59555658,
+	p030                 = 0x30333050,
 }
 @(private)
 shm_requests := []message {
@@ -582,11 +637,9 @@ shm_requests := []message {
 }
 
 @(private)
-shm_events := []message {
-	{"format", "u", raw_data(wayland_types)[0:]},
-}
+shm_events := []message{{"format", "u", raw_data(wayland_types)[0:]}}
 
-shm_interface : interface
+shm_interface: interface
 
 /* A buffer provides the content for a wl_surface. Buffers are
       created through factory interfaces such as wl_shm, wp_linux_buffer_params
@@ -605,11 +658,11 @@ shm_interface : interface
       factory interfaces, the wl_buffer interface is frozen at version 1. */
 buffer :: struct {}
 buffer_set_user_data :: proc "contextless" (buffer_: ^buffer, user_data: rawptr) {
-   proxy_set_user_data(cast(^proxy)buffer_, user_data)
+	proxy_set_user_data(cast(^proxy)buffer_, user_data)
 }
 
 buffer_get_user_data :: proc "contextless" (buffer_: ^buffer) -> rawptr {
-   return proxy_get_user_data(cast(^proxy)buffer_)
+	return proxy_get_user_data(cast(^proxy)buffer_)
 }
 
 /* Destroy a buffer. If and how you need to release the backing
@@ -622,7 +675,7 @@ buffer_destroy :: proc "contextless" (buffer_: ^buffer) {
 }
 
 buffer_listener :: struct {
-/* Sent when this wl_buffer is no longer used by the compositor.
+	/* Sent when this wl_buffer is no longer used by the compositor.
 
 	For more information on when release events may or may not be sent,
 	and what consequences it has, please see the description of
@@ -636,23 +689,18 @@ buffer_listener :: struct {
 	this is possible, when the compositor maintains a copy of the
 	wl_surface contents, e.g. as a GL texture. This is an important
 	optimization for GL(ES) compositors with wl_shm clients. */
-	release : proc "c" (data: rawptr, buffer: ^buffer),
-
+	release: proc "c" (data: rawptr, buffer: ^buffer),
 }
 buffer_add_listener :: proc "contextless" (buffer_: ^buffer, listener: ^buffer_listener, data: rawptr) {
-	proxy_add_listener(cast(^proxy)buffer_, cast(^generic_c_call)listener,data)
+	proxy_add_listener(cast(^proxy)buffer_, cast(^generic_c_call)listener, data)
 }
 @(private)
-buffer_requests := []message {
-	{"destroy", "", raw_data(wayland_types)[0:]},
-}
+buffer_requests := []message{{"destroy", "", raw_data(wayland_types)[0:]}}
 
 @(private)
-buffer_events := []message {
-	{"release", "", raw_data(wayland_types)[0:]},
-}
+buffer_events := []message{{"release", "", raw_data(wayland_types)[0:]}}
 
-buffer_interface : interface
+buffer_interface: interface
 
 /* A wl_data_offer represents a piece of data offered for transfer
       by another client (the source client).  It is used by the
@@ -662,11 +710,11 @@ buffer_interface : interface
       data directly from the source client. */
 data_offer :: struct {}
 data_offer_set_user_data :: proc "contextless" (data_offer_: ^data_offer, user_data: rawptr) {
-   proxy_set_user_data(cast(^proxy)data_offer_, user_data)
+	proxy_set_user_data(cast(^proxy)data_offer_, user_data)
 }
 
 data_offer_get_user_data :: proc "contextless" (data_offer_: ^data_offer) -> rawptr {
-   return proxy_get_user_data(cast(^proxy)data_offer_)
+	return proxy_get_user_data(cast(^proxy)data_offer_)
 }
 
 /* Indicate that the client can accept the given mime type, or
@@ -685,7 +733,15 @@ data_offer_get_user_data :: proc "contextless" (data_offer_: ^data_offer) -> raw
 	conjunction with wl_data_source.action for feedback. */
 DATA_OFFER_ACCEPT :: 0
 data_offer_accept :: proc "contextless" (data_offer_: ^data_offer, serial_: uint, mime_type_: cstring) {
-	proxy_marshal_flags(cast(^proxy)data_offer_, DATA_OFFER_ACCEPT, nil, proxy_get_version(cast(^proxy)data_offer_), 0, serial_, mime_type_)
+	proxy_marshal_flags(
+		cast(^proxy)data_offer_,
+		DATA_OFFER_ACCEPT,
+		nil,
+		proxy_get_version(cast(^proxy)data_offer_),
+		0,
+		serial_,
+		mime_type_,
+	)
 }
 
 /* To transfer the offered data, the client issues this request
@@ -705,13 +761,27 @@ data_offer_accept :: proc "contextless" (data_offer_: ^data_offer, serial_: uint
 	determine acceptance. */
 DATA_OFFER_RECEIVE :: 1
 data_offer_receive :: proc "contextless" (data_offer_: ^data_offer, mime_type_: cstring, fd_: int) {
-	proxy_marshal_flags(cast(^proxy)data_offer_, DATA_OFFER_RECEIVE, nil, proxy_get_version(cast(^proxy)data_offer_), 0, mime_type_, fd_)
+	proxy_marshal_flags(
+		cast(^proxy)data_offer_,
+		DATA_OFFER_RECEIVE,
+		nil,
+		proxy_get_version(cast(^proxy)data_offer_),
+		0,
+		mime_type_,
+		fd_,
+	)
 }
 
 /* Destroy the data offer. */
 DATA_OFFER_DESTROY :: 2
 data_offer_destroy :: proc "contextless" (data_offer_: ^data_offer) {
-	proxy_marshal_flags(cast(^proxy)data_offer_, DATA_OFFER_DESTROY, nil, proxy_get_version(cast(^proxy)data_offer_), 1)
+	proxy_marshal_flags(
+		cast(^proxy)data_offer_,
+		DATA_OFFER_DESTROY,
+		nil,
+		proxy_get_version(cast(^proxy)data_offer_),
+		1,
+	)
 }
 
 /* Notifies the compositor that the drag destination successfully
@@ -765,22 +835,34 @@ data_offer_finish :: proc "contextless" (data_offer_: ^data_offer) {
 	This request can only be made on drag-and-drop offers, a protocol error
 	will be raised otherwise. */
 DATA_OFFER_SET_ACTIONS :: 4
-data_offer_set_actions :: proc "contextless" (data_offer_: ^data_offer, dnd_actions_: data_device_manager_dnd_action, preferred_action_: data_device_manager_dnd_action) {
-	proxy_marshal_flags(cast(^proxy)data_offer_, DATA_OFFER_SET_ACTIONS, nil, proxy_get_version(cast(^proxy)data_offer_), 0, dnd_actions_, preferred_action_)
+data_offer_set_actions :: proc "contextless" (
+	data_offer_: ^data_offer,
+	dnd_actions_: data_device_manager_dnd_action,
+	preferred_action_: data_device_manager_dnd_action,
+) {
+	proxy_marshal_flags(
+		cast(^proxy)data_offer_,
+		DATA_OFFER_SET_ACTIONS,
+		nil,
+		proxy_get_version(cast(^proxy)data_offer_),
+		0,
+		dnd_actions_,
+		preferred_action_,
+	)
 }
 
 data_offer_listener :: struct {
-/* Sent immediately after creating the wl_data_offer object.  One
+	/* Sent immediately after creating the wl_data_offer object.  One
 	event per offered mime type. */
-	offer : proc "c" (data: rawptr, data_offer: ^data_offer, mime_type_: cstring),
+	offer:          proc "c" (data: rawptr, data_offer: ^data_offer, mime_type_: cstring),
 
-/* This event indicates the actions offered by the data source. It
+	/* This event indicates the actions offered by the data source. It
 	will be sent immediately after creating the wl_data_offer object,
 	or anytime the source side changes its offered actions through
 	wl_data_source.set_actions. */
-	source_actions : proc "c" (data: rawptr, data_offer: ^data_offer, source_actions_: data_device_manager_dnd_action),
+	source_actions: proc "c" (data: rawptr, data_offer: ^data_offer, source_actions_: data_device_manager_dnd_action),
 
-/* This event indicates the action selected by the compositor after
+	/* This event indicates the action selected by the compositor after
 	matching the source/destination side actions. Only one action (or
 	none) will be offered here.
 
@@ -815,18 +897,21 @@ data_offer_listener :: struct {
 	user (e.g. popping up a menu with the available options). The
 	final wl_data_offer.set_actions and wl_data_offer.accept requests
 	must happen before the call to wl_data_offer.finish. */
-	action : proc "c" (data: rawptr, data_offer: ^data_offer, dnd_action_: data_device_manager_dnd_action),
-
+	action:         proc "c" (data: rawptr, data_offer: ^data_offer, dnd_action_: data_device_manager_dnd_action),
 }
-data_offer_add_listener :: proc "contextless" (data_offer_: ^data_offer, listener: ^data_offer_listener, data: rawptr) {
-	proxy_add_listener(cast(^proxy)data_offer_, cast(^generic_c_call)listener,data)
+data_offer_add_listener :: proc "contextless" (
+	data_offer_: ^data_offer,
+	listener: ^data_offer_listener,
+	data: rawptr,
+) {
+	proxy_add_listener(cast(^proxy)data_offer_, cast(^generic_c_call)listener, data)
 }
 /*  */
 data_offer_error :: enum {
-	invalid_finish = 0,
+	invalid_finish      = 0,
 	invalid_action_mask = 1,
-	invalid_action = 2,
-	invalid_offer = 3,
+	invalid_action      = 2,
+	invalid_offer       = 3,
 }
 @(private)
 data_offer_requests := []message {
@@ -844,7 +929,7 @@ data_offer_events := []message {
 	{"action", "3u", raw_data(wayland_types)[0:]},
 }
 
-data_offer_interface : interface
+data_offer_interface: interface
 
 /* The wl_data_source object is the source side of a wl_data_offer.
       It is created by the source client in a data transfer and
@@ -852,11 +937,11 @@ data_offer_interface : interface
       to requests to transfer the data. */
 data_source :: struct {}
 data_source_set_user_data :: proc "contextless" (data_source_: ^data_source, user_data: rawptr) {
-   proxy_set_user_data(cast(^proxy)data_source_, user_data)
+	proxy_set_user_data(cast(^proxy)data_source_, user_data)
 }
 
 data_source_get_user_data :: proc "contextless" (data_source_: ^data_source) -> rawptr {
-   return proxy_get_user_data(cast(^proxy)data_source_)
+	return proxy_get_user_data(cast(^proxy)data_source_)
 }
 
 /* This request adds a mime type to the set of mime types
@@ -864,13 +949,26 @@ data_source_get_user_data :: proc "contextless" (data_source_: ^data_source) -> 
 	multiple types. */
 DATA_SOURCE_OFFER :: 0
 data_source_offer :: proc "contextless" (data_source_: ^data_source, mime_type_: cstring) {
-	proxy_marshal_flags(cast(^proxy)data_source_, DATA_SOURCE_OFFER, nil, proxy_get_version(cast(^proxy)data_source_), 0, mime_type_)
+	proxy_marshal_flags(
+		cast(^proxy)data_source_,
+		DATA_SOURCE_OFFER,
+		nil,
+		proxy_get_version(cast(^proxy)data_source_),
+		0,
+		mime_type_,
+	)
 }
 
 /* Destroy the data source. */
 DATA_SOURCE_DESTROY :: 1
 data_source_destroy :: proc "contextless" (data_source_: ^data_source) {
-	proxy_marshal_flags(cast(^proxy)data_source_, DATA_SOURCE_DESTROY, nil, proxy_get_version(cast(^proxy)data_source_), 1)
+	proxy_marshal_flags(
+		cast(^proxy)data_source_,
+		DATA_SOURCE_DESTROY,
+		nil,
+		proxy_get_version(cast(^proxy)data_source_),
+		1,
+	)
 }
 
 /* Sets the actions that the source side client supports for this
@@ -887,23 +985,33 @@ data_source_destroy :: proc "contextless" (data_source_: ^data_source) {
 	wl_data_device.start_drag. Attempting to use the source other than
 	for drag-and-drop will raise a protocol error. */
 DATA_SOURCE_SET_ACTIONS :: 2
-data_source_set_actions :: proc "contextless" (data_source_: ^data_source, dnd_actions_: data_device_manager_dnd_action) {
-	proxy_marshal_flags(cast(^proxy)data_source_, DATA_SOURCE_SET_ACTIONS, nil, proxy_get_version(cast(^proxy)data_source_), 0, dnd_actions_)
+data_source_set_actions :: proc "contextless" (
+	data_source_: ^data_source,
+	dnd_actions_: data_device_manager_dnd_action,
+) {
+	proxy_marshal_flags(
+		cast(^proxy)data_source_,
+		DATA_SOURCE_SET_ACTIONS,
+		nil,
+		proxy_get_version(cast(^proxy)data_source_),
+		0,
+		dnd_actions_,
+	)
 }
 
 data_source_listener :: struct {
-/* Sent when a target accepts pointer_focus or motion events.  If
+	/* Sent when a target accepts pointer_focus or motion events.  If
 	a target does not accept any of the offered types, type is NULL.
 
 	Used for feedback during drag-and-drop. */
-	target : proc "c" (data: rawptr, data_source: ^data_source, mime_type_: cstring),
+	target:             proc "c" (data: rawptr, data_source: ^data_source, mime_type_: cstring),
 
-/* Request for data from the client.  Send the data as the
+	/* Request for data from the client.  Send the data as the
 	specified mime type over the passed file descriptor, then
 	close it. */
-	send : proc "c" (data: rawptr, data_source: ^data_source, mime_type_: cstring, fd_: int),
+	send:               proc "c" (data: rawptr, data_source: ^data_source, mime_type_: cstring, fd_: int),
 
-/* This data source is no longer valid. There are several reasons why
+	/* This data source is no longer valid. There are several reasons why
 	this could happen:
 
 	- The data source has been replaced by another data source.
@@ -923,9 +1031,9 @@ data_source_listener :: struct {
 	For objects of version 2 or older, wl_data_source.cancelled will
 	only be emitted if the data source was replaced by another data
 	source. */
-	cancelled : proc "c" (data: rawptr, data_source: ^data_source),
+	cancelled:          proc "c" (data: rawptr, data_source: ^data_source),
 
-/* The user performed the drop action. This event does not indicate
+	/* The user performed the drop action. This event does not indicate
 	acceptance, wl_data_source.cancelled may still be emitted afterwards
 	if the drop destination does not accept any mime type.
 
@@ -934,17 +1042,17 @@ data_source_listener :: struct {
 
 	Note that the data_source may still be used in the future and should
 	not be destroyed here. */
-	dnd_drop_performed : proc "c" (data: rawptr, data_source: ^data_source),
+	dnd_drop_performed: proc "c" (data: rawptr, data_source: ^data_source),
 
-/* The drop destination finished interoperating with this data
+	/* The drop destination finished interoperating with this data
 	source, so the client is now free to destroy this data source and
 	free all associated data.
 
 	If the action used to perform the operation was "move", the
 	source can now delete the transferred data. */
-	dnd_finished : proc "c" (data: rawptr, data_source: ^data_source),
+	dnd_finished:       proc "c" (data: rawptr, data_source: ^data_source),
 
-/* This event indicates the action selected by the compositor after
+	/* This event indicates the action selected by the compositor after
 	matching the source/destination side actions. Only one action (or
 	none) will be offered here.
 
@@ -969,16 +1077,23 @@ data_source_listener :: struct {
 
 	Clients can trigger cursor surface changes from this point, so
 	they reflect the current action. */
-	action : proc "c" (data: rawptr, data_source: ^data_source, dnd_action_: data_device_manager_dnd_action),
-
+	action:             proc "c" (
+		data: rawptr,
+		data_source: ^data_source,
+		dnd_action_: data_device_manager_dnd_action,
+	),
 }
-data_source_add_listener :: proc "contextless" (data_source_: ^data_source, listener: ^data_source_listener, data: rawptr) {
-	proxy_add_listener(cast(^proxy)data_source_, cast(^generic_c_call)listener,data)
+data_source_add_listener :: proc "contextless" (
+	data_source_: ^data_source,
+	listener: ^data_source_listener,
+	data: rawptr,
+) {
+	proxy_add_listener(cast(^proxy)data_source_, cast(^generic_c_call)listener, data)
 }
 /*  */
 data_source_error :: enum {
 	invalid_action_mask = 0,
-	invalid_source = 1,
+	invalid_source      = 1,
 }
 @(private)
 data_source_requests := []message {
@@ -997,7 +1112,7 @@ data_source_events := []message {
 	{"action", "3u", raw_data(wayland_types)[0:]},
 }
 
-data_source_interface : interface
+data_source_interface: interface
 
 /* There is one wl_data_device per seat which can be obtained
       from the global wl_data_device_manager singleton.
@@ -1006,11 +1121,11 @@ data_source_interface : interface
       mechanisms such as copy-and-paste and drag-and-drop. */
 data_device :: struct {}
 data_device_set_user_data :: proc "contextless" (data_device_: ^data_device, user_data: rawptr) {
-   proxy_set_user_data(cast(^proxy)data_device_, user_data)
+	proxy_set_user_data(cast(^proxy)data_device_, user_data)
 }
 
 data_device_get_user_data :: proc "contextless" (data_device_: ^data_device) -> rawptr {
-   return proxy_get_user_data(cast(^proxy)data_device_)
+	return proxy_get_user_data(cast(^proxy)data_device_)
 }
 
 /* This request asks the compositor to start a drag-and-drop
@@ -1043,8 +1158,24 @@ data_device_get_user_data :: proc "contextless" (data_device_: ^data_device) -> 
 	start_drag requests. Attempting to reuse a previously-used source
 	may send a used_source error. */
 DATA_DEVICE_START_DRAG :: 0
-data_device_start_drag :: proc "contextless" (data_device_: ^data_device, source_: ^data_source, origin_: ^surface, icon_: ^surface, serial_: uint) {
-	proxy_marshal_flags(cast(^proxy)data_device_, DATA_DEVICE_START_DRAG, nil, proxy_get_version(cast(^proxy)data_device_), 0, source_, origin_, icon_, serial_)
+data_device_start_drag :: proc "contextless" (
+	data_device_: ^data_device,
+	source_: ^data_source,
+	origin_: ^surface,
+	icon_: ^surface,
+	serial_: uint,
+) {
+	proxy_marshal_flags(
+		cast(^proxy)data_device_,
+		DATA_DEVICE_START_DRAG,
+		nil,
+		proxy_get_version(cast(^proxy)data_device_),
+		0,
+		source_,
+		origin_,
+		icon_,
+		serial_,
+	)
 }
 
 /* This request asks the compositor to set the selection
@@ -1057,47 +1188,69 @@ data_device_start_drag :: proc "contextless" (data_device_: ^data_device, source
 	may send a used_source error. */
 DATA_DEVICE_SET_SELECTION :: 1
 data_device_set_selection :: proc "contextless" (data_device_: ^data_device, source_: ^data_source, serial_: uint) {
-	proxy_marshal_flags(cast(^proxy)data_device_, DATA_DEVICE_SET_SELECTION, nil, proxy_get_version(cast(^proxy)data_device_), 0, source_, serial_)
+	proxy_marshal_flags(
+		cast(^proxy)data_device_,
+		DATA_DEVICE_SET_SELECTION,
+		nil,
+		proxy_get_version(cast(^proxy)data_device_),
+		0,
+		source_,
+		serial_,
+	)
 }
 
 /* This request destroys the data device. */
 DATA_DEVICE_RELEASE :: 2
 data_device_release :: proc "contextless" (data_device_: ^data_device) {
-	proxy_marshal_flags(cast(^proxy)data_device_, DATA_DEVICE_RELEASE, nil, proxy_get_version(cast(^proxy)data_device_), 1)
+	proxy_marshal_flags(
+		cast(^proxy)data_device_,
+		DATA_DEVICE_RELEASE,
+		nil,
+		proxy_get_version(cast(^proxy)data_device_),
+		1,
+	)
 }
 
 data_device_destroy :: proc "contextless" (data_device_: ^data_device) {
-   proxy_destroy(cast(^proxy)data_device_)
+	proxy_destroy(cast(^proxy)data_device_)
 }
 
 data_device_listener :: struct {
-/* The data_offer event introduces a new wl_data_offer object,
+	/* The data_offer event introduces a new wl_data_offer object,
 	which will subsequently be used in either the
 	data_device.enter event (for drag-and-drop) or the
 	data_device.selection event (for selections).  Immediately
 	following the data_device.data_offer event, the new data_offer
 	object will send out data_offer.offer events to describe the
 	mime types it offers. */
-	data_offer : proc "c" (data: rawptr, data_device: ^data_device) -> ^data_offer,
+	data_offer: proc "c" (data: rawptr, data_device: ^data_device) -> ^data_offer,
 
-/* This event is sent when an active drag-and-drop pointer enters
+	/* This event is sent when an active drag-and-drop pointer enters
 	a surface owned by the client.  The position of the pointer at
 	enter time is provided by the x and y arguments, in surface-local
 	coordinates. */
-	enter : proc "c" (data: rawptr, data_device: ^data_device, serial_: uint, surface_: ^surface, x_: fixed_t, y_: fixed_t, id_: ^data_offer),
+	enter:      proc "c" (
+		data: rawptr,
+		data_device: ^data_device,
+		serial_: uint,
+		surface_: ^surface,
+		x_: fixed_t,
+		y_: fixed_t,
+		id_: ^data_offer,
+	),
 
-/* This event is sent when the drag-and-drop pointer leaves the
+	/* This event is sent when the drag-and-drop pointer leaves the
 	surface and the session ends.  The client must destroy the
 	wl_data_offer introduced at enter time at this point. */
-	leave : proc "c" (data: rawptr, data_device: ^data_device),
+	leave:      proc "c" (data: rawptr, data_device: ^data_device),
 
-/* This event is sent when the drag-and-drop pointer moves within
+	/* This event is sent when the drag-and-drop pointer moves within
 	the currently focused surface. The new position of the pointer
 	is provided by the x and y arguments, in surface-local
 	coordinates. */
-	motion : proc "c" (data: rawptr, data_device: ^data_device, time_: uint, x_: fixed_t, y_: fixed_t),
+	motion:     proc "c" (data: rawptr, data_device: ^data_device, time_: uint, x_: fixed_t, y_: fixed_t),
 
-/* The event is sent when a drag-and-drop operation is ended
+	/* The event is sent when a drag-and-drop operation is ended
 	because the implicit grab is removed.
 
 	The drag-and-drop destination is expected to honor the last action
@@ -1110,9 +1263,9 @@ data_device_listener :: struct {
 	final. The drag-and-drop destination is expected to perform one last
 	wl_data_offer.set_actions request, or wl_data_offer.destroy in order
 	to cancel the operation. */
-	drop : proc "c" (data: rawptr, data_device: ^data_device),
+	drop:       proc "c" (data: rawptr, data_device: ^data_device),
 
-/* The selection event is sent out to notify the client of a new
+	/* The selection event is sent out to notify the client of a new
 	wl_data_offer for the selection for this device.  The
 	data_device.data_offer and the data_offer.offer events are
 	sent out immediately before this event to introduce the data
@@ -1124,15 +1277,18 @@ data_device_listener :: struct {
 	keyboard focus within the same client doesn't mean a new selection
 	will be sent.  The client must destroy the previous selection
 	data_offer, if any, upon receiving this event. */
-	selection : proc "c" (data: rawptr, data_device: ^data_device, id_: ^data_offer),
-
+	selection:  proc "c" (data: rawptr, data_device: ^data_device, id_: ^data_offer),
 }
-data_device_add_listener :: proc "contextless" (data_device_: ^data_device, listener: ^data_device_listener, data: rawptr) {
-	proxy_add_listener(cast(^proxy)data_device_, cast(^generic_c_call)listener,data)
+data_device_add_listener :: proc "contextless" (
+	data_device_: ^data_device,
+	listener: ^data_device_listener,
+	data: rawptr,
+) {
+	proxy_add_listener(cast(^proxy)data_device_, cast(^generic_c_call)listener, data)
 }
 /*  */
 data_device_error :: enum {
-	role = 0,
+	role        = 0,
 	used_source = 1,
 }
 @(private)
@@ -1152,7 +1308,7 @@ data_device_events := []message {
 	{"selection", "?o", raw_data(wayland_types)[33:]},
 }
 
-data_device_interface : interface
+data_device_interface: interface
 
 /* The wl_data_device_manager is a singleton global object that
       provides access to inter-client data transfer mechanisms such as
@@ -1165,30 +1321,53 @@ data_device_interface : interface
       functioning properly. See wl_data_source.set_actions,
       wl_data_offer.accept and wl_data_offer.finish for details. */
 data_device_manager :: struct {}
-data_device_manager_set_user_data :: proc "contextless" (data_device_manager_: ^data_device_manager, user_data: rawptr) {
-   proxy_set_user_data(cast(^proxy)data_device_manager_, user_data)
+data_device_manager_set_user_data :: proc "contextless" (
+	data_device_manager_: ^data_device_manager,
+	user_data: rawptr,
+) {
+	proxy_set_user_data(cast(^proxy)data_device_manager_, user_data)
 }
 
 data_device_manager_get_user_data :: proc "contextless" (data_device_manager_: ^data_device_manager) -> rawptr {
-   return proxy_get_user_data(cast(^proxy)data_device_manager_)
+	return proxy_get_user_data(cast(^proxy)data_device_manager_)
 }
 
 /* Create a new data source. */
 DATA_DEVICE_MANAGER_CREATE_DATA_SOURCE :: 0
-data_device_manager_create_data_source :: proc "contextless" (data_device_manager_: ^data_device_manager) -> ^data_source {
-	ret := proxy_marshal_flags(cast(^proxy)data_device_manager_, DATA_DEVICE_MANAGER_CREATE_DATA_SOURCE, &data_source_interface, proxy_get_version(cast(^proxy)data_device_manager_), 0, nil)
+data_device_manager_create_data_source :: proc "contextless" (
+	data_device_manager_: ^data_device_manager,
+) -> ^data_source {
+	ret := proxy_marshal_flags(
+		cast(^proxy)data_device_manager_,
+		DATA_DEVICE_MANAGER_CREATE_DATA_SOURCE,
+		&data_source_interface,
+		proxy_get_version(cast(^proxy)data_device_manager_),
+		0,
+		nil,
+	)
 	return cast(^data_source)ret
 }
 
 /* Create a new data device for a given seat. */
 DATA_DEVICE_MANAGER_GET_DATA_DEVICE :: 1
-data_device_manager_get_data_device :: proc "contextless" (data_device_manager_: ^data_device_manager, seat_: ^seat) -> ^data_device {
-	ret := proxy_marshal_flags(cast(^proxy)data_device_manager_, DATA_DEVICE_MANAGER_GET_DATA_DEVICE, &data_device_interface, proxy_get_version(cast(^proxy)data_device_manager_), 0, nil, seat_)
+data_device_manager_get_data_device :: proc "contextless" (
+	data_device_manager_: ^data_device_manager,
+	seat_: ^seat,
+) -> ^data_device {
+	ret := proxy_marshal_flags(
+		cast(^proxy)data_device_manager_,
+		DATA_DEVICE_MANAGER_GET_DATA_DEVICE,
+		&data_device_interface,
+		proxy_get_version(cast(^proxy)data_device_manager_),
+		0,
+		nil,
+		seat_,
+	)
 	return cast(^data_device)ret
 }
 
 data_device_manager_destroy :: proc "contextless" (data_device_manager_: ^data_device_manager) {
-   proxy_destroy(cast(^proxy)data_device_manager_)
+	proxy_destroy(cast(^proxy)data_device_manager_)
 }
 
 /* This is a bitmask of the available/preferred actions in a
@@ -1218,7 +1397,7 @@ data_device_manager_dnd_action :: enum {
 	none = 0,
 	copy = 1,
 	move = 2,
-	ask = 4,
+	ask  = 4,
 }
 @(private)
 data_device_manager_requests := []message {
@@ -1226,7 +1405,7 @@ data_device_manager_requests := []message {
 	{"get_data_device", "no", raw_data(wayland_types)[35:]},
 }
 
-data_device_manager_interface : interface
+data_device_manager_interface: interface
 
 /* A surface is a rectangular area that may be displayed on zero
       or more outputs, and shown any number of times at the compositor's
@@ -1272,11 +1451,11 @@ data_device_manager_interface : interface
       switching is not allowed). */
 surface :: struct {}
 surface_set_user_data :: proc "contextless" (surface_: ^surface, user_data: rawptr) {
-   proxy_set_user_data(cast(^proxy)surface_, user_data)
+	proxy_set_user_data(cast(^proxy)surface_, user_data)
 }
 
 surface_get_user_data :: proc "contextless" (surface_: ^surface) -> rawptr {
-   return proxy_get_user_data(cast(^proxy)surface_)
+	return proxy_get_user_data(cast(^proxy)surface_)
 }
 
 /* Deletes the surface and invalidates its object ID. */
@@ -1351,7 +1530,16 @@ surface_destroy :: proc "contextless" (surface_: ^surface) {
 	destroying buffers. */
 SURFACE_ATTACH :: 1
 surface_attach :: proc "contextless" (surface_: ^surface, buffer_: ^buffer, x_: int, y_: int) {
-	proxy_marshal_flags(cast(^proxy)surface_, SURFACE_ATTACH, nil, proxy_get_version(cast(^proxy)surface_), 0, buffer_, x_, y_)
+	proxy_marshal_flags(
+		cast(^proxy)surface_,
+		SURFACE_ATTACH,
+		nil,
+		proxy_get_version(cast(^proxy)surface_),
+		0,
+		buffer_,
+		x_,
+		y_,
+	)
 }
 
 /* This request is used to describe the regions where the pending
@@ -1377,7 +1565,17 @@ surface_attach :: proc "contextless" (surface_: ^surface, buffer_: ^buffer, x_: 
 	instead of surface coordinates. */
 SURFACE_DAMAGE :: 2
 surface_damage :: proc "contextless" (surface_: ^surface, x_: int, y_: int, width_: int, height_: int) {
-	proxy_marshal_flags(cast(^proxy)surface_, SURFACE_DAMAGE, nil, proxy_get_version(cast(^proxy)surface_), 0, x_, y_, width_, height_)
+	proxy_marshal_flags(
+		cast(^proxy)surface_,
+		SURFACE_DAMAGE,
+		nil,
+		proxy_get_version(cast(^proxy)surface_),
+		0,
+		x_,
+		y_,
+		width_,
+		height_,
+	)
 }
 
 /* Request a notification when it is a good time to start drawing a new
@@ -1414,7 +1612,14 @@ surface_damage :: proc "contextless" (surface_: ^surface, x_: int, y_: int, widt
 	milliseconds, with an undefined base. */
 SURFACE_FRAME :: 3
 surface_frame :: proc "contextless" (surface_: ^surface) -> ^callback {
-	ret := proxy_marshal_flags(cast(^proxy)surface_, SURFACE_FRAME, &callback_interface, proxy_get_version(cast(^proxy)surface_), 0, nil)
+	ret := proxy_marshal_flags(
+		cast(^proxy)surface_,
+		SURFACE_FRAME,
+		&callback_interface,
+		proxy_get_version(cast(^proxy)surface_),
+		0,
+		nil,
+	)
 	return cast(^callback)ret
 }
 
@@ -1444,7 +1649,14 @@ surface_frame :: proc "contextless" (surface_: ^surface) -> ^callback {
 	region to be set to empty. */
 SURFACE_SET_OPAQUE_REGION :: 4
 surface_set_opaque_region :: proc "contextless" (surface_: ^surface, region_: ^region) {
-	proxy_marshal_flags(cast(^proxy)surface_, SURFACE_SET_OPAQUE_REGION, nil, proxy_get_version(cast(^proxy)surface_), 0, region_)
+	proxy_marshal_flags(
+		cast(^proxy)surface_,
+		SURFACE_SET_OPAQUE_REGION,
+		nil,
+		proxy_get_version(cast(^proxy)surface_),
+		0,
+		region_,
+	)
 }
 
 /* This request sets the region of the surface that can receive
@@ -1471,7 +1683,14 @@ surface_set_opaque_region :: proc "contextless" (surface_: ^surface, region_: ^r
 	to infinite. */
 SURFACE_SET_INPUT_REGION :: 5
 surface_set_input_region :: proc "contextless" (surface_: ^surface, region_: ^region) {
-	proxy_marshal_flags(cast(^proxy)surface_, SURFACE_SET_INPUT_REGION, nil, proxy_get_version(cast(^proxy)surface_), 0, region_)
+	proxy_marshal_flags(
+		cast(^proxy)surface_,
+		SURFACE_SET_INPUT_REGION,
+		nil,
+		proxy_get_version(cast(^proxy)surface_),
+		0,
+		region_,
+	)
 }
 
 /* Surface state (input, opaque, and damage regions, attached buffers,
@@ -1531,7 +1750,14 @@ surface_commit :: proc "contextless" (surface_: ^surface) {
 	is raised. */
 SURFACE_SET_BUFFER_TRANSFORM :: 7
 surface_set_buffer_transform :: proc "contextless" (surface_: ^surface, transform_: output_transform) {
-	proxy_marshal_flags(cast(^proxy)surface_, SURFACE_SET_BUFFER_TRANSFORM, nil, proxy_get_version(cast(^proxy)surface_), 0, transform_)
+	proxy_marshal_flags(
+		cast(^proxy)surface_,
+		SURFACE_SET_BUFFER_TRANSFORM,
+		nil,
+		proxy_get_version(cast(^proxy)surface_),
+		0,
+		transform_,
+	)
 }
 
 /* This request sets an optional scaling factor on how the compositor
@@ -1559,7 +1785,14 @@ surface_set_buffer_transform :: proc "contextless" (surface_: ^surface, transfor
 	raised. */
 SURFACE_SET_BUFFER_SCALE :: 8
 surface_set_buffer_scale :: proc "contextless" (surface_: ^surface, scale_: int) {
-	proxy_marshal_flags(cast(^proxy)surface_, SURFACE_SET_BUFFER_SCALE, nil, proxy_get_version(cast(^proxy)surface_), 0, scale_)
+	proxy_marshal_flags(
+		cast(^proxy)surface_,
+		SURFACE_SET_BUFFER_SCALE,
+		nil,
+		proxy_get_version(cast(^proxy)surface_),
+		0,
+		scale_,
+	)
 }
 
 /* This request is used to describe the regions where the pending
@@ -1596,7 +1829,17 @@ surface_set_buffer_scale :: proc "contextless" (surface_: ^surface, scale_: int)
 	after receiving the wl_surface.commit. */
 SURFACE_DAMAGE_BUFFER :: 9
 surface_damage_buffer :: proc "contextless" (surface_: ^surface, x_: int, y_: int, width_: int, height_: int) {
-	proxy_marshal_flags(cast(^proxy)surface_, SURFACE_DAMAGE_BUFFER, nil, proxy_get_version(cast(^proxy)surface_), 0, x_, y_, width_, height_)
+	proxy_marshal_flags(
+		cast(^proxy)surface_,
+		SURFACE_DAMAGE_BUFFER,
+		nil,
+		proxy_get_version(cast(^proxy)surface_),
+		0,
+		x_,
+		y_,
+		width_,
+		height_,
+	)
 }
 
 /* The x and y arguments specify the location of the new pending
@@ -1620,14 +1863,14 @@ surface_offset :: proc "contextless" (surface_: ^surface, x_: int, y_: int) {
 }
 
 surface_listener :: struct {
-/* This is emitted whenever a surface's creation, movement, or resizing
+	/* This is emitted whenever a surface's creation, movement, or resizing
 	results in some part of it being within the scanout region of an
 	output.
 
 	Note that a surface may be overlapping with zero or more outputs. */
-	enter : proc "c" (data: rawptr, surface: ^surface, output_: ^output),
+	enter:                      proc "c" (data: rawptr, surface: ^surface, output_: ^output),
 
-/* This is emitted whenever a surface's creation, movement, or resizing
+	/* This is emitted whenever a surface's creation, movement, or resizing
 	results in it no longer having any part of it within the scanout region
 	of an output.
 
@@ -1636,9 +1879,9 @@ surface_listener :: struct {
 	has been sent, and the compositor might expect new surface content
 	updates even if no enter event has been sent. The frame event should be
 	used instead. */
-	leave : proc "c" (data: rawptr, surface: ^surface, output_: ^output),
+	leave:                      proc "c" (data: rawptr, surface: ^surface, output_: ^output),
 
-/* This event indicates the preferred buffer scale for this surface. It is
+	/* This event indicates the preferred buffer scale for this surface. It is
 	sent whenever the compositor's preference changes.
 
 	Before receiving this event the preferred buffer scale for this surface
@@ -1650,9 +1893,9 @@ surface_listener :: struct {
 	buffer.
 
 	The compositor shall emit a scale value greater than 0. */
-	preferred_buffer_scale : proc "c" (data: rawptr, surface: ^surface, factor_: int),
+	preferred_buffer_scale:     proc "c" (data: rawptr, surface: ^surface, factor_: int),
 
-/* This event indicates the preferred buffer transform for this surface.
+	/* This event indicates the preferred buffer transform for this surface.
 	It is sent whenever the compositor's preference changes.
 
 	Before receiving this event the preferred buffer transform for this
@@ -1661,18 +1904,17 @@ surface_listener :: struct {
 	Applying this transformation to the surface buffer contents and using
 	wl_surface.set_buffer_transform might allow the compositor to use the
 	surface buffer more efficiently. */
-	preferred_buffer_transform : proc "c" (data: rawptr, surface: ^surface, transform_: output_transform),
-
+	preferred_buffer_transform: proc "c" (data: rawptr, surface: ^surface, transform_: output_transform),
 }
 surface_add_listener :: proc "contextless" (surface_: ^surface, listener: ^surface_listener, data: rawptr) {
-	proxy_add_listener(cast(^proxy)surface_, cast(^generic_c_call)listener,data)
+	proxy_add_listener(cast(^proxy)surface_, cast(^generic_c_call)listener, data)
 }
 /* These errors can be emitted in response to wl_surface requests. */
 surface_error :: enum {
-	invalid_scale = 0,
-	invalid_transform = 1,
-	invalid_size = 2,
-	invalid_offset = 3,
+	invalid_scale       = 0,
+	invalid_transform   = 1,
+	invalid_size        = 2,
+	invalid_offset      = 3,
 	defunct_role_object = 4,
 }
 @(private)
@@ -1698,7 +1940,7 @@ surface_events := []message {
 	{"preferred_buffer_transform", "6u", raw_data(wayland_types)[0:]},
 }
 
-surface_interface : interface
+surface_interface: interface
 
 /* A seat is a group of keyboards, pointer and touch devices. This
       object is published as a global during start up, or when such a
@@ -1706,11 +1948,11 @@ surface_interface : interface
       maintains a keyboard focus and a pointer focus. */
 seat :: struct {}
 seat_set_user_data :: proc "contextless" (seat_: ^seat, user_data: rawptr) {
-   proxy_set_user_data(cast(^proxy)seat_, user_data)
+	proxy_set_user_data(cast(^proxy)seat_, user_data)
 }
 
 seat_get_user_data :: proc "contextless" (seat_: ^seat) -> rawptr {
-   return proxy_get_user_data(cast(^proxy)seat_)
+	return proxy_get_user_data(cast(^proxy)seat_)
 }
 
 /* The ID provided will be initialized to the wl_pointer interface
@@ -1723,7 +1965,14 @@ seat_get_user_data :: proc "contextless" (seat_: ^seat) -> rawptr {
 	be sent in this case. */
 SEAT_GET_POINTER :: 0
 seat_get_pointer :: proc "contextless" (seat_: ^seat) -> ^pointer {
-	ret := proxy_marshal_flags(cast(^proxy)seat_, SEAT_GET_POINTER, &pointer_interface, proxy_get_version(cast(^proxy)seat_), 0, nil)
+	ret := proxy_marshal_flags(
+		cast(^proxy)seat_,
+		SEAT_GET_POINTER,
+		&pointer_interface,
+		proxy_get_version(cast(^proxy)seat_),
+		0,
+		nil,
+	)
 	return cast(^pointer)ret
 }
 
@@ -1737,7 +1986,14 @@ seat_get_pointer :: proc "contextless" (seat_: ^seat) -> ^pointer {
 	be sent in this case. */
 SEAT_GET_KEYBOARD :: 1
 seat_get_keyboard :: proc "contextless" (seat_: ^seat) -> ^keyboard {
-	ret := proxy_marshal_flags(cast(^proxy)seat_, SEAT_GET_KEYBOARD, &keyboard_interface, proxy_get_version(cast(^proxy)seat_), 0, nil)
+	ret := proxy_marshal_flags(
+		cast(^proxy)seat_,
+		SEAT_GET_KEYBOARD,
+		&keyboard_interface,
+		proxy_get_version(cast(^proxy)seat_),
+		0,
+		nil,
+	)
 	return cast(^keyboard)ret
 }
 
@@ -1751,7 +2007,14 @@ seat_get_keyboard :: proc "contextless" (seat_: ^seat) -> ^keyboard {
 	be sent in this case. */
 SEAT_GET_TOUCH :: 2
 seat_get_touch :: proc "contextless" (seat_: ^seat) -> ^touch {
-	ret := proxy_marshal_flags(cast(^proxy)seat_, SEAT_GET_TOUCH, &touch_interface, proxy_get_version(cast(^proxy)seat_), 0, nil)
+	ret := proxy_marshal_flags(
+		cast(^proxy)seat_,
+		SEAT_GET_TOUCH,
+		&touch_interface,
+		proxy_get_version(cast(^proxy)seat_),
+		0,
+		nil,
+	)
 	return cast(^touch)ret
 }
 
@@ -1763,11 +2026,11 @@ seat_release :: proc "contextless" (seat_: ^seat) {
 }
 
 seat_destroy :: proc "contextless" (seat_: ^seat) {
-   proxy_destroy(cast(^proxy)seat_)
+	proxy_destroy(cast(^proxy)seat_)
 }
 
 seat_listener :: struct {
-/* This is emitted whenever a seat gains or loses the pointer,
+	/* This is emitted whenever a seat gains or loses the pointer,
 	keyboard or touch capabilities.  The argument is a capability
 	enum containing the complete set of capabilities this seat has.
 
@@ -1791,9 +2054,9 @@ seat_listener :: struct {
 
 	The above behavior also applies to wl_keyboard and wl_touch with the
 	keyboard and touch capabilities, respectively. */
-	capabilities : proc "c" (data: rawptr, seat: ^seat, capabilities_: seat_capability),
+	capabilities: proc "c" (data: rawptr, seat: ^seat, capabilities_: seat_capability),
 
-/* In a multi-seat configuration the seat name can be used by clients to
+	/* In a multi-seat configuration the seat name can be used by clients to
 	help identify which physical devices the seat represents.
 
 	The seat name is a UTF-8 string with no convention defined for its
@@ -1809,18 +2072,17 @@ seat_listener :: struct {
 
 	Compositors may re-use the same seat name if the wl_seat global is
 	destroyed and re-created later. */
-	name : proc "c" (data: rawptr, seat: ^seat, name_: cstring),
-
+	name:         proc "c" (data: rawptr, seat: ^seat, name_: cstring),
 }
 seat_add_listener :: proc "contextless" (seat_: ^seat, listener: ^seat_listener, data: rawptr) {
-	proxy_add_listener(cast(^proxy)seat_, cast(^generic_c_call)listener,data)
+	proxy_add_listener(cast(^proxy)seat_, cast(^generic_c_call)listener, data)
 }
 /* This is a bitmask of capabilities this seat has; if a member is
 	set, then it is present on the seat. */
 seat_capability :: enum {
-	pointer = 1,
+	pointer  = 1,
 	keyboard = 2,
-	touch = 4,
+	touch    = 4,
 }
 /* These errors can be emitted in response to wl_seat requests. */
 seat_error :: enum {
@@ -1840,7 +2102,7 @@ seat_events := []message {
 	{"name", "2s", raw_data(wayland_types)[0:]},
 }
 
-seat_interface : interface
+seat_interface: interface
 
 /* The wl_pointer interface represents one or more input devices,
       such as mice, which control the pointer location and pointer_focus
@@ -1852,11 +2114,11 @@ seat_interface : interface
       and scrolling. */
 pointer :: struct {}
 pointer_set_user_data :: proc "contextless" (pointer_: ^pointer, user_data: rawptr) {
-   proxy_set_user_data(cast(^proxy)pointer_, user_data)
+	proxy_set_user_data(cast(^proxy)pointer_, user_data)
 }
 
 pointer_get_user_data :: proc "contextless" (pointer_: ^pointer) -> rawptr {
-   return proxy_get_user_data(cast(^proxy)pointer_)
+	return proxy_get_user_data(cast(^proxy)pointer_)
 }
 
 /* Set the pointer surface, i.e., the surface that contains the
@@ -1893,8 +2155,24 @@ pointer_get_user_data :: proc "contextless" (pointer_: ^pointer) -> rawptr {
 	serial number sent to the client. Otherwise the request will be
 	ignored. */
 POINTER_SET_CURSOR :: 0
-pointer_set_cursor :: proc "contextless" (pointer_: ^pointer, serial_: uint, surface_: ^surface, hotspot_x_: int, hotspot_y_: int) {
-	proxy_marshal_flags(cast(^proxy)pointer_, POINTER_SET_CURSOR, nil, proxy_get_version(cast(^proxy)pointer_), 0, serial_, surface_, hotspot_x_, hotspot_y_)
+pointer_set_cursor :: proc "contextless" (
+	pointer_: ^pointer,
+	serial_: uint,
+	surface_: ^surface,
+	hotspot_x_: int,
+	hotspot_y_: int,
+) {
+	proxy_marshal_flags(
+		cast(^proxy)pointer_,
+		POINTER_SET_CURSOR,
+		nil,
+		proxy_get_version(cast(^proxy)pointer_),
+		0,
+		serial_,
+		surface_,
+		hotspot_x_,
+		hotspot_y_,
+	)
 }
 
 /* Using this request a client can tell the server that it is not going to
@@ -1908,31 +2186,44 @@ pointer_release :: proc "contextless" (pointer_: ^pointer) {
 }
 
 pointer_destroy :: proc "contextless" (pointer_: ^pointer) {
-   proxy_destroy(cast(^proxy)pointer_)
+	proxy_destroy(cast(^proxy)pointer_)
 }
 
 pointer_listener :: struct {
-/* Notification that this seat's pointer is focused on a certain
+	/* Notification that this seat's pointer is focused on a certain
 	surface.
 
 	When a seat's focus enters a surface, the pointer image
 	is undefined and a client should respond to this event by setting
 	an appropriate pointer image with the set_cursor request. */
-	enter : proc "c" (data: rawptr, pointer: ^pointer, serial_: uint, surface_: ^surface, surface_x_: fixed_t, surface_y_: fixed_t),
+	enter:                   proc "c" (
+		data: rawptr,
+		pointer: ^pointer,
+		serial_: uint,
+		surface_: ^surface,
+		surface_x_: fixed_t,
+		surface_y_: fixed_t,
+	),
 
-/* Notification that this seat's pointer is no longer focused on
+	/* Notification that this seat's pointer is no longer focused on
 	a certain surface.
 
 	The leave notification is sent before the enter notification
 	for the new focus. */
-	leave : proc "c" (data: rawptr, pointer: ^pointer, serial_: uint, surface_: ^surface),
+	leave:                   proc "c" (data: rawptr, pointer: ^pointer, serial_: uint, surface_: ^surface),
 
-/* Notification of pointer location change. The arguments
+	/* Notification of pointer location change. The arguments
 	surface_x and surface_y are the location relative to the
 	focused surface. */
-	motion : proc "c" (data: rawptr, pointer: ^pointer, time_: uint, surface_x_: fixed_t, surface_y_: fixed_t),
+	motion:                  proc "c" (
+		data: rawptr,
+		pointer: ^pointer,
+		time_: uint,
+		surface_x_: fixed_t,
+		surface_y_: fixed_t,
+	),
 
-/* Mouse button click and release notifications.
+	/* Mouse button click and release notifications.
 
 	The location of the click is given by the last motion or
 	enter event.
@@ -1946,9 +2237,16 @@ pointer_listener :: struct {
 	kernel's event code list. All other button codes above 0xFFFF are
 	currently undefined but may be used in future versions of this
 	protocol. */
-	button : proc "c" (data: rawptr, pointer: ^pointer, serial_: uint, time_: uint, button_: uint, state_: pointer_button_state),
+	button:                  proc "c" (
+		data: rawptr,
+		pointer: ^pointer,
+		serial_: uint,
+		time_: uint,
+		button_: uint,
+		state_: pointer_button_state,
+	),
 
-/* Scroll and other axis notifications.
+	/* Scroll and other axis notifications.
 
 	For scroll events (vertical and horizontal scroll axes), the
 	value parameter is the length of a vector along the specified
@@ -1964,9 +2262,15 @@ pointer_listener :: struct {
 
 	When applicable, a client can transform its content relative to the
 	scroll distance. */
-	axis : proc "c" (data: rawptr, pointer: ^pointer, time_: uint, axis_: pointer_axis, value_: fixed_t),
+	axis:                    proc "c" (
+		data: rawptr,
+		pointer: ^pointer,
+		time_: uint,
+		axis_: pointer_axis,
+		value_: fixed_t,
+	),
 
-/* Indicates the end of a set of events that logically belong together.
+	/* Indicates the end of a set of events that logically belong together.
 	A client is expected to accumulate the data in all events within the
 	frame before proceeding.
 
@@ -2000,9 +2304,9 @@ pointer_listener :: struct {
 	Compositor-specific policies may require the wl_pointer.leave and
 	wl_pointer.enter event being split across multiple wl_pointer.frame
 	groups. */
-	frame : proc "c" (data: rawptr, pointer: ^pointer),
+	frame:                   proc "c" (data: rawptr, pointer: ^pointer),
 
-/* Source information for scroll and other axes.
+	/* Source information for scroll and other axes.
 
 	This event does not occur on its own. It is sent before a
 	wl_pointer.frame event and carries the source information for
@@ -2027,9 +2331,9 @@ pointer_listener :: struct {
 
 	The order of wl_pointer.axis_discrete and wl_pointer.axis_source is
 	not guaranteed. */
-	axis_source : proc "c" (data: rawptr, pointer: ^pointer, axis_source_: pointer_axis_source),
+	axis_source:             proc "c" (data: rawptr, pointer: ^pointer, axis_source_: pointer_axis_source),
 
-/* Stop notification for scroll and other axes.
+	/* Stop notification for scroll and other axes.
 
 	For some wl_pointer.axis_source types, a wl_pointer.axis_stop event
 	is sent to notify a client that the axis sequence has terminated.
@@ -2043,9 +2347,9 @@ pointer_listener :: struct {
 	The timestamp is to be interpreted identical to the timestamp in the
 	wl_pointer.axis event. The timestamp value may be the same as a
 	preceding wl_pointer.axis event. */
-	axis_stop : proc "c" (data: rawptr, pointer: ^pointer, time_: uint, axis_: pointer_axis),
+	axis_stop:               proc "c" (data: rawptr, pointer: ^pointer, time_: uint, axis_: pointer_axis),
 
-/* Discrete step information for scroll and other axes.
+	/* Discrete step information for scroll and other axes.
 
 	This event carries the axis value of the wl_pointer.axis event in
 	discrete steps (e.g. mouse wheel clicks).
@@ -2075,9 +2379,9 @@ pointer_listener :: struct {
 
 	The order of wl_pointer.axis_discrete and wl_pointer.axis_source is
 	not guaranteed. */
-	axis_discrete : proc "c" (data: rawptr, pointer: ^pointer, axis_: pointer_axis, discrete_: int),
+	axis_discrete:           proc "c" (data: rawptr, pointer: ^pointer, axis_: pointer_axis, discrete_: int),
 
-/* Discrete high-resolution scroll information.
+	/* Discrete high-resolution scroll information.
 
 	This event carries high-resolution wheel scroll information,
 	with each multiple of 120 representing one logical scroll step
@@ -2098,9 +2402,9 @@ pointer_listener :: struct {
 
 	The order of wl_pointer.axis_value120 and wl_pointer.axis_source is
 	not guaranteed. */
-	axis_value120 : proc "c" (data: rawptr, pointer: ^pointer, axis_: pointer_axis, value120_: int),
+	axis_value120:           proc "c" (data: rawptr, pointer: ^pointer, axis_: pointer_axis, value120_: int),
 
-/* Relative directional information of the entity causing the axis
+	/* Relative directional information of the entity causing the axis
 	motion.
 
 	For a wl_pointer.axis event, the wl_pointer.axis_relative_direction
@@ -2135,11 +2439,15 @@ pointer_listener :: struct {
 	The order of wl_pointer.axis_relative_direction,
 	wl_pointer.axis_discrete and wl_pointer.axis_source is not
 	guaranteed. */
-	axis_relative_direction : proc "c" (data: rawptr, pointer: ^pointer, axis_: pointer_axis, direction_: pointer_axis_relative_direction),
-
+	axis_relative_direction: proc "c" (
+		data: rawptr,
+		pointer: ^pointer,
+		axis_: pointer_axis,
+		direction_: pointer_axis_relative_direction,
+	),
 }
 pointer_add_listener :: proc "contextless" (pointer_: ^pointer, listener: ^pointer_listener, data: rawptr) {
-	proxy_add_listener(cast(^proxy)pointer_, cast(^generic_c_call)listener,data)
+	proxy_add_listener(cast(^proxy)pointer_, cast(^generic_c_call)listener, data)
 }
 /*  */
 pointer_error :: enum {
@@ -2149,11 +2457,11 @@ pointer_error :: enum {
 	event. */
 pointer_button_state :: enum {
 	released = 0,
-	pressed = 1,
+	pressed  = 1,
 }
 /* Describes the axis types of scroll events. */
 pointer_axis :: enum {
-	vertical_scroll = 0,
+	vertical_scroll   = 0,
 	horizontal_scroll = 1,
 }
 /* Describes the source types for axis events. This indicates to the
@@ -2173,8 +2481,8 @@ pointer_axis :: enum {
 	wheel but the scroll event is not caused by a rotation but a
 	(usually sideways) tilt of the wheel. */
 pointer_axis_source :: enum {
-	wheel = 0,
-	finger = 1,
+	wheel      = 0,
+	finger     = 1,
 	continuous = 2,
 	wheel_tilt = 3,
 }
@@ -2182,7 +2490,7 @@ pointer_axis_source :: enum {
 	wl_pointer.axis event, relative to the wl_pointer.axis direction. */
 pointer_axis_relative_direction :: enum {
 	identical = 0,
-	inverted = 1,
+	inverted  = 1,
 }
 @(private)
 pointer_requests := []message {
@@ -2205,7 +2513,7 @@ pointer_events := []message {
 	{"axis_relative_direction", "9uu", raw_data(wayland_types)[0:]},
 }
 
-pointer_interface : interface
+pointer_interface: interface
 
 /* The wl_keyboard interface represents one or more keyboards
       associated with a seat.
@@ -2221,11 +2529,11 @@ pointer_interface : interface
       are empty, the active modifiers and the active group are 0. */
 keyboard :: struct {}
 keyboard_set_user_data :: proc "contextless" (keyboard_: ^keyboard, user_data: rawptr) {
-   proxy_set_user_data(cast(^proxy)keyboard_, user_data)
+	proxy_set_user_data(cast(^proxy)keyboard_, user_data)
 }
 
 keyboard_get_user_data :: proc "contextless" (keyboard_: ^keyboard) -> rawptr {
-   return proxy_get_user_data(cast(^proxy)keyboard_)
+	return proxy_get_user_data(cast(^proxy)keyboard_)
 }
 
 /*  */
@@ -2235,19 +2543,19 @@ keyboard_release :: proc "contextless" (keyboard_: ^keyboard) {
 }
 
 keyboard_destroy :: proc "contextless" (keyboard_: ^keyboard) {
-   proxy_destroy(cast(^proxy)keyboard_)
+	proxy_destroy(cast(^proxy)keyboard_)
 }
 
 keyboard_listener :: struct {
-/* This event provides a file descriptor to the client which can be
+	/* This event provides a file descriptor to the client which can be
 	memory-mapped in read-only mode to provide a keyboard mapping
 	description.
 
 	From version 7 onwards, the fd must be mapped with MAP_PRIVATE by
 	the recipient, as MAP_SHARED may fail. */
-	keymap : proc "c" (data: rawptr, keyboard: ^keyboard, format_: keyboard_keymap_format, fd_: int, size_: uint),
+	keymap:      proc "c" (data: rawptr, keyboard: ^keyboard, format_: keyboard_keymap_format, fd_: int, size_: uint),
 
-/* Notification that this seat's keyboard focus is on a certain
+	/* Notification that this seat's keyboard focus is on a certain
 	surface.
 
 	The compositor must send the wl_keyboard.modifiers event after this
@@ -2260,9 +2568,9 @@ keyboard_listener :: struct {
 
 	Clients should not use the list of pressed keys to emulate key-press
 	events. The order of keys in the list is unspecified. */
-	enter : proc "c" (data: rawptr, keyboard: ^keyboard, serial_: uint, surface_: ^surface, keys_: array),
+	enter:       proc "c" (data: rawptr, keyboard: ^keyboard, serial_: uint, surface_: ^surface, keys_: array),
 
-/* Notification that this seat's keyboard focus is no longer on
+	/* Notification that this seat's keyboard focus is no longer on
 	a certain surface.
 
 	The leave notification is sent before the enter notification
@@ -2272,9 +2580,9 @@ keyboard_listener :: struct {
 	defaults. The compositor must not send this event if the active surface
 	of the wl_keyboard was not equal to the surface argument immediately
 	before this event. */
-	leave : proc "c" (data: rawptr, keyboard: ^keyboard, serial_: uint, surface_: ^surface),
+	leave:       proc "c" (data: rawptr, keyboard: ^keyboard, serial_: uint, surface_: ^surface),
 
-/* A key was pressed or released.
+	/* A key was pressed or released.
 	The time argument is a timestamp with millisecond
 	granularity, with an undefined base.
 
@@ -2297,9 +2605,16 @@ keyboard_listener :: struct {
 	key state when a wl_keyboard.repeat_info event with a rate argument of
 	0 has been received. This allows the compositor to take over the
 	responsibility of key repetition. */
-	key : proc "c" (data: rawptr, keyboard: ^keyboard, serial_: uint, time_: uint, key_: uint, state_: keyboard_key_state),
+	key:         proc "c" (
+		data: rawptr,
+		keyboard: ^keyboard,
+		serial_: uint,
+		time_: uint,
+		key_: uint,
+		state_: keyboard_key_state,
+	),
 
-/* Notifies clients that the modifier and/or group state has
+	/* Notifies clients that the modifier and/or group state has
 	changed, and it should update its local state.
 
 	The compositor may send this event without a surface of the client
@@ -2312,9 +2627,17 @@ keyboard_listener :: struct {
 
 	In the wl_keyboard logical state, this event updates the modifiers and
 	group. */
-	modifiers : proc "c" (data: rawptr, keyboard: ^keyboard, serial_: uint, mods_depressed_: uint, mods_latched_: uint, mods_locked_: uint, group_: uint),
+	modifiers:   proc "c" (
+		data: rawptr,
+		keyboard: ^keyboard,
+		serial_: uint,
+		mods_depressed_: uint,
+		mods_latched_: uint,
+		mods_locked_: uint,
+		group_: uint,
+	),
 
-/* Informs the client about the keyboard's repeat rate and delay.
+	/* Informs the client about the keyboard's repeat rate and delay.
 
 	This event is sent as soon as the wl_keyboard object has been created,
 	and is guaranteed to be received by the client before any key press
@@ -2326,17 +2649,16 @@ keyboard_listener :: struct {
 	This event can be sent later on as well with a new value if necessary,
 	so clients should continue listening for the event past the creation
 	of wl_keyboard. */
-	repeat_info : proc "c" (data: rawptr, keyboard: ^keyboard, rate_: int, delay_: int),
-
+	repeat_info: proc "c" (data: rawptr, keyboard: ^keyboard, rate_: int, delay_: int),
 }
 keyboard_add_listener :: proc "contextless" (keyboard_: ^keyboard, listener: ^keyboard_listener, data: rawptr) {
-	proxy_add_listener(cast(^proxy)keyboard_, cast(^generic_c_call)listener,data)
+	proxy_add_listener(cast(^proxy)keyboard_, cast(^generic_c_call)listener, data)
 }
 /* This specifies the format of the keymap provided to the
 	client with the wl_keyboard.keymap event. */
 keyboard_keymap_format :: enum {
 	no_keymap = 0,
-	xkb_v1 = 1,
+	xkb_v1    = 1,
 }
 /* Describes the physical state of a key that produced the key event.
 
@@ -2349,13 +2671,11 @@ keyboard_keymap_format :: enum {
 	generated multiple times while the key is down. */
 keyboard_key_state :: enum {
 	released = 0,
-	pressed = 1,
+	pressed  = 1,
 	repeated = 2,
 }
 @(private)
-keyboard_requests := []message {
-	{"release", "3", raw_data(wayland_types)[0:]},
-}
+keyboard_requests := []message{{"release", "3", raw_data(wayland_types)[0:]}}
 
 @(private)
 keyboard_events := []message {
@@ -2367,7 +2687,7 @@ keyboard_events := []message {
 	{"repeat_info", "4ii", raw_data(wayland_types)[0:]},
 }
 
-keyboard_interface : interface
+keyboard_interface: interface
 
 /* The wl_touch interface represents a touchscreen
       associated with a seat.
@@ -2379,11 +2699,11 @@ keyboard_interface : interface
       contact point can be identified by the ID of the sequence. */
 touch :: struct {}
 touch_set_user_data :: proc "contextless" (touch_: ^touch, user_data: rawptr) {
-   proxy_set_user_data(cast(^proxy)touch_, user_data)
+	proxy_set_user_data(cast(^proxy)touch_, user_data)
 }
 
 touch_get_user_data :: proc "contextless" (touch_: ^touch) -> rawptr {
-   return proxy_get_user_data(cast(^proxy)touch_)
+	return proxy_get_user_data(cast(^proxy)touch_)
 }
 
 /*  */
@@ -2393,25 +2713,34 @@ touch_release :: proc "contextless" (touch_: ^touch) {
 }
 
 touch_destroy :: proc "contextless" (touch_: ^touch) {
-   proxy_destroy(cast(^proxy)touch_)
+	proxy_destroy(cast(^proxy)touch_)
 }
 
 touch_listener :: struct {
-/* A new touch point has appeared on the surface. This touch point is
+	/* A new touch point has appeared on the surface. This touch point is
 	assigned a unique ID. Future events from this touch point reference
 	this ID. The ID ceases to be valid after a touch up event and may be
 	reused in the future. */
-	down : proc "c" (data: rawptr, touch: ^touch, serial_: uint, time_: uint, surface_: ^surface, id_: int, x_: fixed_t, y_: fixed_t),
+	down:        proc "c" (
+		data: rawptr,
+		touch: ^touch,
+		serial_: uint,
+		time_: uint,
+		surface_: ^surface,
+		id_: int,
+		x_: fixed_t,
+		y_: fixed_t,
+	),
 
-/* The touch point has disappeared. No further events will be sent for
+	/* The touch point has disappeared. No further events will be sent for
 	this touch point and the touch point's ID is released and may be
 	reused in a future touch down event. */
-	up : proc "c" (data: rawptr, touch: ^touch, serial_: uint, time_: uint, id_: int),
+	up:          proc "c" (data: rawptr, touch: ^touch, serial_: uint, time_: uint, id_: int),
 
-/* A touch point has changed coordinates. */
-	motion : proc "c" (data: rawptr, touch: ^touch, time_: uint, id_: int, x_: fixed_t, y_: fixed_t),
+	/* A touch point has changed coordinates. */
+	motion:      proc "c" (data: rawptr, touch: ^touch, time_: uint, id_: int, x_: fixed_t, y_: fixed_t),
 
-/* Indicates the end of a set of events that logically belong together.
+	/* Indicates the end of a set of events that logically belong together.
 	A client is expected to accumulate the data in all events within the
 	frame before proceeding.
 
@@ -2419,9 +2748,9 @@ touch_listener :: struct {
 	guarantee is provided about the set of events within a frame. A client
 	must assume that any state not updated in a frame is unchanged from the
 	previously known state. */
-	frame : proc "c" (data: rawptr, touch: ^touch),
+	frame:       proc "c" (data: rawptr, touch: ^touch),
 
-/* Sent if the compositor decides the touch stream is a global
+	/* Sent if the compositor decides the touch stream is a global
 	gesture. No further events are sent to the clients from that
 	particular gesture. Touch cancellation applies to all touch points
 	currently active on this client's surface. The client is
@@ -2429,9 +2758,9 @@ touch_listener :: struct {
 	this surface may reuse the touch point ID.
 
 	No frame event is required after the cancel event. */
-	cancel : proc "c" (data: rawptr, touch: ^touch),
+	cancel:      proc "c" (data: rawptr, touch: ^touch),
 
-/* Sent when a touchpoint has changed its shape.
+	/* Sent when a touchpoint has changed its shape.
 
 	This event does not occur on its own. It is sent before a
 	wl_touch.frame event and carries the new shape information for
@@ -2456,9 +2785,9 @@ touch_listener :: struct {
 	This event is only sent by the compositor if the touch device supports
 	shape reports. The client has to make reasonable assumptions about the
 	shape if it did not receive this event. */
-	shape : proc "c" (data: rawptr, touch: ^touch, id_: int, major_: fixed_t, minor_: fixed_t),
+	shape:       proc "c" (data: rawptr, touch: ^touch, id_: int, major_: fixed_t, minor_: fixed_t),
 
-/* Sent when a touchpoint has changed its orientation.
+	/* Sent when a touchpoint has changed its orientation.
 
 	This event does not occur on its own. It is sent before a
 	wl_touch.frame event and carries the new shape information for
@@ -2481,16 +2810,13 @@ touch_listener :: struct {
 
 	This event is only sent by the compositor if the touch device supports
 	orientation reports. */
-	orientation : proc "c" (data: rawptr, touch: ^touch, id_: int, orientation_: fixed_t),
-
+	orientation: proc "c" (data: rawptr, touch: ^touch, id_: int, orientation_: fixed_t),
 }
 touch_add_listener :: proc "contextless" (touch_: ^touch, listener: ^touch_listener, data: rawptr) {
-	proxy_add_listener(cast(^proxy)touch_, cast(^generic_c_call)listener,data)
+	proxy_add_listener(cast(^proxy)touch_, cast(^generic_c_call)listener, data)
 }
 @(private)
-touch_requests := []message {
-	{"release", "3", raw_data(wayland_types)[0:]},
-}
+touch_requests := []message{{"release", "3", raw_data(wayland_types)[0:]}}
 
 @(private)
 touch_events := []message {
@@ -2503,7 +2829,7 @@ touch_events := []message {
 	{"orientation", "6if", raw_data(wayland_types)[0:]},
 }
 
-touch_interface : interface
+touch_interface: interface
 
 /* An output describes part of the compositor geometry.  The
       compositor works in the 'compositor coordinate system' and an
@@ -2513,11 +2839,11 @@ touch_interface : interface
       as global during start up, or when a monitor is hotplugged. */
 output :: struct {}
 output_set_user_data :: proc "contextless" (output_: ^output, user_data: rawptr) {
-   proxy_set_user_data(cast(^proxy)output_, user_data)
+	proxy_set_user_data(cast(^proxy)output_, user_data)
 }
 
 output_get_user_data :: proc "contextless" (output_: ^output) -> rawptr {
-   return proxy_get_user_data(cast(^proxy)output_)
+	return proxy_get_user_data(cast(^proxy)output_)
 }
 
 /* Using this request a client can tell the server that it is not going to
@@ -2528,11 +2854,11 @@ output_release :: proc "contextless" (output_: ^output) {
 }
 
 output_destroy :: proc "contextless" (output_: ^output) {
-   proxy_destroy(cast(^proxy)output_)
+	proxy_destroy(cast(^proxy)output_)
 }
 
 output_listener :: struct {
-/* The geometry event describes geometric properties of the output.
+	/* The geometry event describes geometric properties of the output.
 	The event is sent when binding to the output object and whenever
 	any of the properties change.
 
@@ -2552,9 +2878,20 @@ output_listener :: struct {
 	outputs, might fake this information. Instead of using x and y, clients
 	should use xdg_output.logical_position. Instead of using make and model,
 	clients should use name and description. */
-	geometry : proc "c" (data: rawptr, output: ^output, x_: int, y_: int, physical_width_: int, physical_height_: int, subpixel_: output_subpixel, make_: cstring, model_: cstring, transform_: output_transform),
+	geometry:    proc "c" (
+		data: rawptr,
+		output: ^output,
+		x_: int,
+		y_: int,
+		physical_width_: int,
+		physical_height_: int,
+		subpixel_: output_subpixel,
+		make_: cstring,
+		model_: cstring,
+		transform_: output_transform,
+	),
 
-/* The mode event describes an available mode for the output.
+	/* The mode event describes an available mode for the output.
 
 	The event is sent when binding to the output object and there
 	will always be one mode, the current mode.  The event is sent
@@ -2587,16 +2924,23 @@ output_listener :: struct {
 	Note: this information is not always meaningful for all outputs. Some
 	compositors, such as those exposing virtual outputs, might fake the
 	refresh rate or the size. */
-	mode : proc "c" (data: rawptr, output: ^output, flags_: output_mode, width_: int, height_: int, refresh_: int),
+	mode:        proc "c" (
+		data: rawptr,
+		output: ^output,
+		flags_: output_mode,
+		width_: int,
+		height_: int,
+		refresh_: int,
+	),
 
-/* This event is sent after all other properties have been
+	/* This event is sent after all other properties have been
 	sent after binding to the output object and after any
 	other property changes done after that. This allows
 	changes to the output properties to be seen as
 	atomic, even if they happen via multiple events. */
-	done : proc "c" (data: rawptr, output: ^output),
+	done:        proc "c" (data: rawptr, output: ^output),
 
-/* This event contains scaling geometry information
+	/* This event contains scaling geometry information
 	that is not in the geometry event. It may be sent after
 	binding the output object or if the output scale changes
 	later. The compositor will emit a non-zero, positive
@@ -2614,9 +2958,9 @@ output_listener :: struct {
 	scale to use for a surface.
 
 	The scale event will be followed by a done event. */
-	scale : proc "c" (data: rawptr, output: ^output, factor_: int),
+	scale:       proc "c" (data: rawptr, output: ^output, factor_: int),
 
-/* Many compositors will assign user-friendly names to their outputs, show
+	/* Many compositors will assign user-friendly names to their outputs, show
 	them to the user, allow the user to refer to an output, etc. The client
 	may wish to know this name as well to offer the user similar behaviors.
 
@@ -2644,9 +2988,9 @@ output_listener :: struct {
 	same name if possible.
 
 	The name event will be followed by a done event. */
-	name : proc "c" (data: rawptr, output: ^output, name_: cstring),
+	name:        proc "c" (data: rawptr, output: ^output, name_: cstring),
 
-/* Many compositors can produce human-readable descriptions of their
+	/* Many compositors can produce human-readable descriptions of their
 	outputs. The client may wish to know this description as well, e.g. for
 	output selection purposes.
 
@@ -2660,21 +3004,20 @@ output_listener :: struct {
 	not be sent at all.
 
 	The description event will be followed by a done event. */
-	description : proc "c" (data: rawptr, output: ^output, description_: cstring),
-
+	description: proc "c" (data: rawptr, output: ^output, description_: cstring),
 }
 output_add_listener :: proc "contextless" (output_: ^output, listener: ^output_listener, data: rawptr) {
-	proxy_add_listener(cast(^proxy)output_, cast(^generic_c_call)listener,data)
+	proxy_add_listener(cast(^proxy)output_, cast(^generic_c_call)listener, data)
 }
 /* This enumeration describes how the physical
 	pixels on an output are laid out. */
 output_subpixel :: enum {
-	unknown = 0,
-	none = 1,
+	unknown        = 0,
+	none           = 1,
 	horizontal_rgb = 2,
 	horizontal_bgr = 3,
-	vertical_rgb = 4,
-	vertical_bgr = 5,
+	vertical_rgb   = 4,
+	vertical_bgr   = 5,
 }
 /* This describes transformations that clients and compositors apply to
 	buffer contents.
@@ -2687,25 +3030,23 @@ output_subpixel :: enum {
 	compositor will still be able to scan out directly from client
 	surfaces. */
 output_transform :: enum {
-	normal = 0,
-	_90 = 1,
-	_180 = 2,
-	_270 = 3,
-	flipped = 4,
-	flipped_90 = 5,
+	normal      = 0,
+	_90         = 1,
+	_180        = 2,
+	_270        = 3,
+	flipped     = 4,
+	flipped_90  = 5,
 	flipped_180 = 6,
 	flipped_270 = 7,
 }
 /* These flags describe properties of an output mode.
 	They are used in the flags bitfield of the mode event. */
 output_mode :: enum {
-	current = 0x1,
+	current   = 0x1,
 	preferred = 0x2,
 }
 @(private)
-output_requests := []message {
-	{"release", "3", raw_data(wayland_types)[0:]},
-}
+output_requests := []message{{"release", "3", raw_data(wayland_types)[0:]}}
 
 @(private)
 output_events := []message {
@@ -2717,7 +3058,7 @@ output_events := []message {
 	{"description", "4s", raw_data(wayland_types)[0:]},
 }
 
-output_interface : interface
+output_interface: interface
 
 /* A region object describes an area.
 
@@ -2725,11 +3066,11 @@ output_interface : interface
       regions of a surface. */
 region :: struct {}
 region_set_user_data :: proc "contextless" (region_: ^region, user_data: rawptr) {
-   proxy_set_user_data(cast(^proxy)region_, user_data)
+	proxy_set_user_data(cast(^proxy)region_, user_data)
 }
 
 region_get_user_data :: proc "contextless" (region_: ^region) -> rawptr {
-   return proxy_get_user_data(cast(^proxy)region_)
+	return proxy_get_user_data(cast(^proxy)region_)
 }
 
 /* Destroy the region.  This will invalidate the object ID. */
@@ -2741,13 +3082,33 @@ region_destroy :: proc "contextless" (region_: ^region) {
 /* Add the specified rectangle to the region. */
 REGION_ADD :: 1
 region_add :: proc "contextless" (region_: ^region, x_: int, y_: int, width_: int, height_: int) {
-	proxy_marshal_flags(cast(^proxy)region_, REGION_ADD, nil, proxy_get_version(cast(^proxy)region_), 0, x_, y_, width_, height_)
+	proxy_marshal_flags(
+		cast(^proxy)region_,
+		REGION_ADD,
+		nil,
+		proxy_get_version(cast(^proxy)region_),
+		0,
+		x_,
+		y_,
+		width_,
+		height_,
+	)
 }
 
 /* Subtract the specified rectangle from the region. */
 REGION_SUBTRACT :: 2
 region_subtract :: proc "contextless" (region_: ^region, x_: int, y_: int, width_: int, height_: int) {
-	proxy_marshal_flags(cast(^proxy)region_, REGION_SUBTRACT, nil, proxy_get_version(cast(^proxy)region_), 0, x_, y_, width_, height_)
+	proxy_marshal_flags(
+		cast(^proxy)region_,
+		REGION_SUBTRACT,
+		nil,
+		proxy_get_version(cast(^proxy)region_),
+		0,
+		x_,
+		y_,
+		width_,
+		height_,
+	)
 }
 
 @(private)
@@ -2757,7 +3118,7 @@ region_requests := []message {
 	{"subtract", "iiii", raw_data(wayland_types)[0:]},
 }
 
-region_interface : interface
+region_interface: interface
 
 /* The global interface exposing sub-surface compositing capabilities.
       A wl_surface, that has sub-surfaces associated, is called the
@@ -2780,11 +3141,11 @@ region_interface : interface
       processing to dedicated overlay hardware when possible. */
 subcompositor :: struct {}
 subcompositor_set_user_data :: proc "contextless" (subcompositor_: ^subcompositor, user_data: rawptr) {
-   proxy_set_user_data(cast(^proxy)subcompositor_, user_data)
+	proxy_set_user_data(cast(^proxy)subcompositor_, user_data)
 }
 
 subcompositor_get_user_data :: proc "contextless" (subcompositor_: ^subcompositor) -> rawptr {
-   return proxy_get_user_data(cast(^proxy)subcompositor_)
+	return proxy_get_user_data(cast(^proxy)subcompositor_)
 }
 
 /* Informs the server that the client will not be using this
@@ -2792,7 +3153,13 @@ subcompositor_get_user_data :: proc "contextless" (subcompositor_: ^subcomposito
 	objects, wl_subsurface objects included. */
 SUBCOMPOSITOR_DESTROY :: 0
 subcompositor_destroy :: proc "contextless" (subcompositor_: ^subcompositor) {
-	proxy_marshal_flags(cast(^proxy)subcompositor_, SUBCOMPOSITOR_DESTROY, nil, proxy_get_version(cast(^proxy)subcompositor_), 1)
+	proxy_marshal_flags(
+		cast(^proxy)subcompositor_,
+		SUBCOMPOSITOR_DESTROY,
+		nil,
+		proxy_get_version(cast(^proxy)subcompositor_),
+		1,
+	)
 }
 
 /* Create a sub-surface interface for the given surface, and
@@ -2815,15 +3182,28 @@ subcompositor_destroy :: proc "contextless" (subcompositor_: ^subcompositor) {
 	This request modifies the behaviour of wl_surface.commit request on
 	the sub-surface, see the documentation on wl_subsurface interface. */
 SUBCOMPOSITOR_GET_SUBSURFACE :: 1
-subcompositor_get_subsurface :: proc "contextless" (subcompositor_: ^subcompositor, surface_: ^surface, parent_: ^surface) -> ^subsurface {
-	ret := proxy_marshal_flags(cast(^proxy)subcompositor_, SUBCOMPOSITOR_GET_SUBSURFACE, &subsurface_interface, proxy_get_version(cast(^proxy)subcompositor_), 0, nil, surface_, parent_)
+subcompositor_get_subsurface :: proc "contextless" (
+	subcompositor_: ^subcompositor,
+	surface_: ^surface,
+	parent_: ^surface,
+) -> ^subsurface {
+	ret := proxy_marshal_flags(
+		cast(^proxy)subcompositor_,
+		SUBCOMPOSITOR_GET_SUBSURFACE,
+		&subsurface_interface,
+		proxy_get_version(cast(^proxy)subcompositor_),
+		0,
+		nil,
+		surface_,
+		parent_,
+	)
 	return cast(^subsurface)ret
 }
 
 /*  */
 subcompositor_error :: enum {
 	bad_surface = 0,
-	bad_parent = 1,
+	bad_parent  = 1,
 }
 @(private)
 subcompositor_requests := []message {
@@ -2831,7 +3211,7 @@ subcompositor_requests := []message {
 	{"get_subsurface", "noo", raw_data(wayland_types)[69:]},
 }
 
-subcompositor_interface : interface
+subcompositor_interface: interface
 
 /* An additional interface to a wl_surface object, which has been
       made a sub-surface. A sub-surface has one parent surface. A
@@ -2887,11 +3267,11 @@ subcompositor_interface : interface
       instead to move the sub-surface. */
 subsurface :: struct {}
 subsurface_set_user_data :: proc "contextless" (subsurface_: ^subsurface, user_data: rawptr) {
-   proxy_set_user_data(cast(^proxy)subsurface_, user_data)
+	proxy_set_user_data(cast(^proxy)subsurface_, user_data)
 }
 
 subsurface_get_user_data :: proc "contextless" (subsurface_: ^subsurface) -> rawptr {
-   return proxy_get_user_data(cast(^proxy)subsurface_)
+	return proxy_get_user_data(cast(^proxy)subsurface_)
 }
 
 /* The sub-surface interface is removed from the wl_surface object
@@ -2900,7 +3280,13 @@ subsurface_get_user_data :: proc "contextless" (subsurface_: ^subsurface) -> raw
 	to the parent is deleted. The wl_surface is unmapped immediately. */
 SUBSURFACE_DESTROY :: 0
 subsurface_destroy :: proc "contextless" (subsurface_: ^subsurface) {
-	proxy_marshal_flags(cast(^proxy)subsurface_, SUBSURFACE_DESTROY, nil, proxy_get_version(cast(^proxy)subsurface_), 1)
+	proxy_marshal_flags(
+		cast(^proxy)subsurface_,
+		SUBSURFACE_DESTROY,
+		nil,
+		proxy_get_version(cast(^proxy)subsurface_),
+		1,
+	)
 }
 
 /* This schedules a sub-surface position change.
@@ -2919,7 +3305,15 @@ subsurface_destroy :: proc "contextless" (subsurface_: ^subsurface) {
 	The initial position is 0, 0. */
 SUBSURFACE_SET_POSITION :: 1
 subsurface_set_position :: proc "contextless" (subsurface_: ^subsurface, x_: int, y_: int) {
-	proxy_marshal_flags(cast(^proxy)subsurface_, SUBSURFACE_SET_POSITION, nil, proxy_get_version(cast(^proxy)subsurface_), 0, x_, y_)
+	proxy_marshal_flags(
+		cast(^proxy)subsurface_,
+		SUBSURFACE_SET_POSITION,
+		nil,
+		proxy_get_version(cast(^proxy)subsurface_),
+		0,
+		x_,
+		y_,
+	)
 }
 
 /* This sub-surface is taken from the stack, and put back just
@@ -2937,14 +3331,28 @@ subsurface_set_position :: proc "contextless" (subsurface_: ^subsurface, x_: int
 	of its siblings and parent. */
 SUBSURFACE_PLACE_ABOVE :: 2
 subsurface_place_above :: proc "contextless" (subsurface_: ^subsurface, sibling_: ^surface) {
-	proxy_marshal_flags(cast(^proxy)subsurface_, SUBSURFACE_PLACE_ABOVE, nil, proxy_get_version(cast(^proxy)subsurface_), 0, sibling_)
+	proxy_marshal_flags(
+		cast(^proxy)subsurface_,
+		SUBSURFACE_PLACE_ABOVE,
+		nil,
+		proxy_get_version(cast(^proxy)subsurface_),
+		0,
+		sibling_,
+	)
 }
 
 /* The sub-surface is placed just below the reference surface.
 	See wl_subsurface.place_above. */
 SUBSURFACE_PLACE_BELOW :: 3
 subsurface_place_below :: proc "contextless" (subsurface_: ^subsurface, sibling_: ^surface) {
-	proxy_marshal_flags(cast(^proxy)subsurface_, SUBSURFACE_PLACE_BELOW, nil, proxy_get_version(cast(^proxy)subsurface_), 0, sibling_)
+	proxy_marshal_flags(
+		cast(^proxy)subsurface_,
+		SUBSURFACE_PLACE_BELOW,
+		nil,
+		proxy_get_version(cast(^proxy)subsurface_),
+		0,
+		sibling_,
+	)
 }
 
 /* Change the commit behaviour of the sub-surface to synchronized
@@ -2962,7 +3370,13 @@ subsurface_place_below :: proc "contextless" (subsurface_: ^subsurface, sibling_
 	See wl_subsurface for the recursive effect of this mode. */
 SUBSURFACE_SET_SYNC :: 4
 subsurface_set_sync :: proc "contextless" (subsurface_: ^subsurface) {
-	proxy_marshal_flags(cast(^proxy)subsurface_, SUBSURFACE_SET_SYNC, nil, proxy_get_version(cast(^proxy)subsurface_), 0)
+	proxy_marshal_flags(
+		cast(^proxy)subsurface_,
+		SUBSURFACE_SET_SYNC,
+		nil,
+		proxy_get_version(cast(^proxy)subsurface_),
+		0,
+	)
 }
 
 /* Change the commit behaviour of the sub-surface to desynchronized
@@ -2986,7 +3400,13 @@ subsurface_set_sync :: proc "contextless" (subsurface_: ^subsurface) {
 	the cached state is applied on set_desync. */
 SUBSURFACE_SET_DESYNC :: 5
 subsurface_set_desync :: proc "contextless" (subsurface_: ^subsurface) {
-	proxy_marshal_flags(cast(^proxy)subsurface_, SUBSURFACE_SET_DESYNC, nil, proxy_get_version(cast(^proxy)subsurface_), 0)
+	proxy_marshal_flags(
+		cast(^proxy)subsurface_,
+		SUBSURFACE_SET_DESYNC,
+		nil,
+		proxy_get_version(cast(^proxy)subsurface_),
+		0,
+	)
 }
 
 /*  */
@@ -3003,17 +3423,17 @@ subsurface_requests := []message {
 	{"set_desync", "", raw_data(wayland_types)[0:]},
 }
 
-subsurface_interface : interface
+subsurface_interface: interface
 
 /* This global fixes problems with other core-protocol interfaces that
       cannot be fixed in these interfaces themselves. */
 fixes :: struct {}
 fixes_set_user_data :: proc "contextless" (fixes_: ^fixes, user_data: rawptr) {
-   proxy_set_user_data(cast(^proxy)fixes_, user_data)
+	proxy_set_user_data(cast(^proxy)fixes_, user_data)
 }
 
 fixes_get_user_data :: proc "contextless" (fixes_: ^fixes) -> rawptr {
-   return proxy_get_user_data(cast(^proxy)fixes_)
+	return proxy_get_user_data(cast(^proxy)fixes_)
 }
 
 /*  */
@@ -3033,7 +3453,14 @@ fixes_destroy :: proc "contextless" (fixes_: ^fixes) {
 	wl_display.delete_id event. */
 FIXES_DESTROY_REGISTRY :: 1
 fixes_destroy_registry :: proc "contextless" (fixes_: ^fixes, registry_: ^registry) {
-	proxy_marshal_flags(cast(^proxy)fixes_, FIXES_DESTROY_REGISTRY, nil, proxy_get_version(cast(^proxy)fixes_), 0, registry_)
+	proxy_marshal_flags(
+		cast(^proxy)fixes_,
+		FIXES_DESTROY_REGISTRY,
+		nil,
+		proxy_get_version(cast(^proxy)fixes_),
+		0,
+		registry_,
+	)
 }
 
 @(private)
@@ -3042,11 +3469,12 @@ fixes_requests := []message {
 	{"destroy_registry", "o", raw_data(wayland_types)[74:]},
 }
 
-fixes_interface : interface
+fixes_interface: interface
 
 @(private)
 @(init)
-init_interfaces_wayland :: proc() {
+
+init_interfaces_wayland :: proc "contextless" () {
 	display_interface.name = "wl_display"
 	display_interface.version = 1
 	display_interface.method_count = 2
@@ -3170,48 +3598,50 @@ init_interfaces_wayland :: proc() {
 // Functions from libwayland-client
 import "core:c"
 foreign import wl_lib "system:wayland-client"
-@(default_calling_convention="c")
-@(link_prefix="wl_")
+@(default_calling_convention = "c")
+@(link_prefix = "wl_")
 foreign wl_lib {
-   display_connect                           :: proc(name: cstring) -> ^display ---
-   display_connect_to_fd                     :: proc(fd: int) -> ^display ---
-   display_disconnect                        :: proc(display: ^display) ---
-   display_get_fd                            :: proc(display: ^display) -> int ---
-   display_dispatch                          :: proc(display: ^display) -> int ---
-   display_dispatch_queue                    :: proc(display: ^display, queue: event_queue) -> int ---
-   display_dispatch_queue_pending            :: proc(display: ^display, queue: event_queue) -> int ---
-   display_dispatch_pending                  :: proc(display: ^display) -> int ---
-   display_get_error                         :: proc(display: ^display) -> int ---
-   display_get_protocol_error                :: proc(display: ^display, intf: ^interface, id: ^u32) -> u32 ---
-   display_flush                             :: proc(display: ^display) -> int ---
-   display_roundtrip_queue                   :: proc(display: ^display, queue: ^event_queue) -> int ---
-   display_roundtrip                         :: proc(display: ^display) -> int ---
-   display_create_queue                      :: proc(display: ^display) -> ^event_queue ---
-   display_prepare_read_queue                :: proc(display: ^display, queue: ^event_queue) -> int ---
-   display_prepare_read                      :: proc(display: ^display) -> int ---
-   display_cancel_read                       :: proc(display: ^display) ---
-   display_read_events                       :: proc(display: ^display) -> int ---
-   display_set_max_buffer_size               :: proc(display: ^display, max_buffer_size: c.size_t) ---
+	display_connect :: proc(name: cstring) -> ^display ---
+	display_connect_to_fd :: proc(fd: int) -> ^display ---
+	display_disconnect :: proc(display: ^display) ---
+	display_get_fd :: proc(display: ^display) -> int ---
+	display_dispatch :: proc(display: ^display) -> int ---
+	display_dispatch_queue :: proc(display: ^display, queue: event_queue) -> int ---
+	display_dispatch_queue_pending :: proc(display: ^display, queue: event_queue) -> int ---
+	display_dispatch_pending :: proc(display: ^display) -> int ---
+	display_get_error :: proc(display: ^display) -> int ---
+	display_get_protocol_error :: proc(display: ^display, intf: ^interface, id: ^u32) -> u32 ---
+	display_flush :: proc(display: ^display) -> int ---
+	display_roundtrip_queue :: proc(display: ^display, queue: ^event_queue) -> int ---
+	display_roundtrip :: proc(display: ^display) -> int ---
+	display_create_queue :: proc(display: ^display) -> ^event_queue ---
+	display_prepare_read_queue :: proc(display: ^display, queue: ^event_queue) -> int ---
+	display_prepare_read :: proc(display: ^display) -> int ---
+	display_cancel_read :: proc(display: ^display) ---
+	display_read_events :: proc(display: ^display) -> int ---
+	display_set_max_buffer_size :: proc(display: ^display, max_buffer_size: c.size_t) ---
 
-   proxy_marshal_flags                       :: proc(p: ^proxy, opcode: uint, intf: ^interface, version: uint, flags: uint, #c_vararg args: ..any) -> ^proxy ---
-   proxy_marshal                             :: proc(p: ^proxy, opcode: uint, #c_vararg args: ..any) ---
-   proxy_create                              :: proc(factory: ^proxy, intf: ^interface) -> ^proxy ---
-   proxy_create_wrapper                      :: proc(proxy: rawptr) -> rawptr ---
-   proxy_wrapper_destroy                     :: proc(proxy_wrapper: rawptr) ---
-   proxy_marshal_constructor                 :: proc(p: ^proxy, opcode: uint, intf: ^interface, #c_vararg args: ..any) -> ^proxy ---
-   proxy_marshal_constructor_versioned       :: proc(p: ^proxy, opcode: uint, intf: ^interface, version: uint, #c_vararg args: ..any) -> ^proxy ---
-   proxy_marshal_array_constructor           :: proc(p: ^proxy, opcode: uint, args: ^argument, intf: ^interface) -> ^proxy ---
-   proxy_marshal_array_constructor_versioned :: proc(p: ^proxy, opcode: uint, args: ^argument, intf: ^interface, version: uint) -> ^proxy ---
-   proxy_destroy                             :: proc(p: ^proxy) ---
-   proxy_add_listener                        :: proc(p: ^proxy, impl: ^generic_c_call, data: rawptr) -> int ---
-   proxy_get_listener                        :: proc(p: ^proxy) -> rawptr ---
-   proxy_add_dispatcher                      :: proc(p: ^proxy, func: dispatcher_func_t, dispatcher_data: rawptr, data: rawptr) -> int ---
-   proxy_set_user_data                       :: proc(p: ^proxy, user_data: rawptr) ---
-   proxy_get_user_data                       :: proc(p: ^proxy) -> rawptr ---
-   proxy_get_version                         :: proc(p: ^proxy) -> uint ---
-   proxy_get_id                              :: proc(p: ^proxy) -> uint ---
-   proxy_set_tag                             :: proc(p: ^proxy, tag: ^u8) ---
-   proxy_get_tag                             :: proc(p: ^proxy) -> ^u8 ---
-   proxy_get_class                           :: proc(p: ^proxy) -> ^u8 ---
-   proxy_set_queue                           :: proc(p: ^proxy, queue: ^event_queue) ---
+	proxy_marshal_flags :: proc(p: ^proxy, opcode: uint, intf: ^interface, version: uint, flags: uint, #c_vararg args: ..any) -> ^proxy ---
+	proxy_marshal :: proc(p: ^proxy, opcode: uint, #c_vararg args: ..any) ---
+	proxy_create :: proc(factory: ^proxy, intf: ^interface) -> ^proxy ---
+	proxy_create_wrapper :: proc(proxy: rawptr) -> rawptr ---
+	proxy_wrapper_destroy :: proc(proxy_wrapper: rawptr) ---
+	proxy_marshal_constructor :: proc(p: ^proxy, opcode: uint, intf: ^interface, #c_vararg args: ..any) -> ^proxy ---
+	proxy_marshal_constructor_versioned :: proc(p: ^proxy, opcode: uint, intf: ^interface, version: uint, #c_vararg args: ..any) -> ^proxy ---
+	proxy_marshal_array_constructor :: proc(p: ^proxy, opcode: uint, args: ^argument, intf: ^interface) -> ^proxy ---
+	proxy_marshal_array_constructor_versioned :: proc(p: ^proxy, opcode: uint, args: ^argument, intf: ^interface, version: uint) -> ^proxy ---
+	proxy_destroy :: proc(p: ^proxy) ---
+	proxy_add_listener :: proc(p: ^proxy, impl: ^generic_c_call, data: rawptr) -> int ---
+	proxy_get_listener :: proc(p: ^proxy) -> rawptr ---
+	proxy_add_dispatcher :: proc(p: ^proxy, func: dispatcher_func_t, dispatcher_data: rawptr, data: rawptr) -> int ---
+	proxy_set_user_data :: proc(p: ^proxy, user_data: rawptr) ---
+	proxy_get_user_data :: proc(p: ^proxy) -> rawptr ---
+	proxy_get_version :: proc(p: ^proxy) -> uint ---
+	proxy_get_id :: proc(p: ^proxy) -> uint ---
+	proxy_set_tag :: proc(p: ^proxy, tag: ^u8) ---
+	proxy_get_tag :: proc(p: ^proxy) -> ^u8 ---
+	proxy_get_class :: proc(p: ^proxy) -> ^u8 ---
+	proxy_set_queue :: proc(p: ^proxy, queue: ^event_queue) ---
 }
+
+
