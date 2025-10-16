@@ -1,4 +1,5 @@
-package egl_example
+package main
+
 import wl "../../"
 import "../../ext/libdecor"
 import "base:runtime"
@@ -7,152 +8,201 @@ import "core:os"
 import gl "vendor:OpenGL"
 import "vendor:egl"
 
-Size :: [2]int
-global_context: runtime.Context
-window: struct {
-	display:        ^wl.display,
-	surface:        ^wl.surface,
-	egl_display:    egl.Display,
-	egl_window:     ^wl.egl_window,
-	egl_surface:    egl.Surface,
-	egl_context:    egl.Context,
-	compositor:     ^wl.compositor,
-	region:         ^wl.region,
-	instance:       ^libdecor.instance,
-	window_state:   libdecor.window_state,
-	maximized:      bool,
-	frame:          ^libdecor.frame,
-	size, geometry: Size,
-}
-registry_listener := wl.registry_listener {
-	global        = registry_global,
-	global_remove = registry_global_remove,
+state: struct {
+	display:     ^wl.display,
+	compositor:  ^wl.compositor,
+	surface:     ^wl.surface,
+	shm:         ^wl.shm,
+	egl_window:  ^wl.egl_window,
+	egl_display: egl.Display,
+	egl_surface: egl.Surface,
+	egl_context: egl.Context,
+	instance:    ^libdecor.instance,
+	frame:       ^libdecor.frame,
+	size:        [2]int,
 }
 
-iface := libdecor.interface {
+interface := libdecor.interface {
 	error = interface_error,
 }
 
-frame_iface := libdecor.frame_interface {
-	commit    = frame_commit,
+frame_interface := libdecor.frame_interface {
 	close     = frame_close,
+	commit    = frame_commit,
 	configure = frame_configure,
 }
+
 frame_close :: proc "c" (frame: ^libdecor.frame, user_data: rawptr) {
 	os.exit(0)
 }
+
 frame_commit :: proc "c" (frame: ^libdecor.frame, user_data: rawptr) {
-	egl.SwapBuffers(window.egl_display, window.egl_surface)
+	egl.SwapBuffers(state.egl_display, state.egl_surface)
 }
 
 frame_configure :: proc "c" (frame: ^libdecor.frame, configuration: ^libdecor.configuration, user_data: rawptr) {
-	context = global_context
+	context = runtime.default_context()
+
 	width, height: int
-	state: ^libdecor.state
 
 	if !libdecor.configuration_get_content_size(configuration, frame, &width, &height) {
-		width = window.geometry.x
-		height = window.geometry.y
-	}
-	if width > 0 && height > 0 {
-		if !window.maximized {
-			window.size = {width, height}
-		}
-		window.geometry = {width, height}
-	} else if !window.maximized {
-		window.geometry = window.size
+		width = 1280
+		height = 720
 	}
 
-	wl.egl_window_resize(window.egl_window, width, height, 0, 0)
+	wl.egl_window_resize(state.egl_window, width, height, 0, 0)
 
-	state = libdecor.state_new(width, height)
-	libdecor.frame_commit(frame, state, configuration)
-	libdecor.state_free(state)
+	libdecor_state := libdecor.state_new(width, height)
+	libdecor.frame_commit(frame, libdecor_state, configuration)
+	libdecor.state_free(libdecor_state)
+
 	window_state: libdecor.window_state
-	if !libdecor.configuration_get_window_state(configuration, &window_state) do window_state = {}
+	if libdecor.configuration_get_window_state(configuration, &window_state) do window_state = {}
 
-	window.maximized = window_state & {.MAXIMIZED, .FULLSCREEN} != {}
+	state.size = {width, height}
+	gl.Viewport(0, 0, cast(i32)width, cast(i32)height)
 }
 
 interface_error :: proc "c" (instance: ^libdecor.instance, error: libdecor.error, message: cstring) {
-	context = global_context
-	fmt.printfln("libdecor error(%v):%v", error, message)
+	context = runtime.default_context()
+
+	fmt.println("libdecor error", error, message)
+
 	os.exit(1)
 }
 
-registry_global :: proc "c" (
+registry_handle_global :: proc "c" (
 	data: rawptr,
 	registry: ^wl.registry,
 	name: uint,
-	interface_name: cstring,
+	interface: cstring,
 	version: uint,
 ) {
-	context = global_context
-	switch interface_name {
-	case wl.compositor_interface.name:
-		window.compositor = cast(^wl.compositor)wl.registry_bind(registry, name, &wl.compositor_interface, 4)
+	context = runtime.default_context()
+
+	if interface == wl.compositor_interface.name {
+		state.compositor = cast(^wl.compositor)wl.registry_bind(registry, name, &wl.compositor_interface, 4)
 	}
 }
 
-registry_global_remove :: proc "c" (data: rawptr, registry: ^wl.registry, name: uint) {
+VERTEX: cstring = `
+#version 330 core
+layout (location = 0) in vec2 Position;
+
+void main() {
+    gl_Position = vec4(Position, 0.0, 1.0);
 }
+`
+
+
+FRAGMENT: cstring = `
+#version 330 core
+out vec4 FragColor;
+
+void main() {
+    FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+}
+`
 
 
 main :: proc() {
-	global_context = context
-	window = {
-		geometry = {1280, 720},
-		size     = {1280, 720},
-	}
-	window.display = wl.display_connect(nil)
-	if window.display != nil {
-		fmt.println("Successfully connected to a wayland display.")
-	} else {
+	state.display = wl.display_connect(nil)
+
+	if state.display == nil {
 		fmt.println("Failed to connect to a wayland display")
 		return
 	}
-	registry := wl.display_get_registry(window.display)
-	wl.registry_add_listener(registry, &registry_listener, nil)
-	wl.display_roundtrip(window.display)
-	window.surface = wl.compositor_create_surface(window.compositor)
+	fmt.println("Successfully connected to a wayland display.")
+
+	registry_listener := wl.registry_listener {
+		global = registry_handle_global,
+	}
+
+	wl_registry := wl.display_get_registry(state.display)
+	wl.registry_add_listener(wl_registry, &registry_listener, nil)
+	wl.display_roundtrip(state.display)
+	state.surface = wl.compositor_create_surface(state.compositor)
 
 	major, minor: i32
 	egl.BindAPI(egl.OPENGL_API)
 	config_attribs := []i32{egl.RED_SIZE, 8, egl.GREEN_SIZE, 8, egl.BLUE_SIZE, 8, egl.NONE}
 
-	window.egl_display = egl.GetDisplay(cast(egl.NativeDisplayType)window.display)
-	if window.egl_display == nil {
-		fmt.println("Failed to create egl display")
+	state.egl_display = egl.GetDisplay(cast(egl.NativeDisplayType)state.display)
+	if state.egl_display == nil {
+		fmt.println("Failed to get EGL display")
 		return
 	}
-	egl.Initialize(window.egl_display, &major, &minor)
+
+	egl.Initialize(state.egl_display, &major, &minor)
 	fmt.printfln("EGL Major: %v, EGL Minor: %v", major, minor)
 
 	config: egl.Config
 	num_config: i32
-	egl.ChooseConfig(window.egl_display, raw_data(config_attribs), &config, 1, &num_config)
-	window.egl_context = egl.CreateContext(window.egl_display, config, nil, nil)
-	window.egl_window = wl.egl_window_create(window.surface, window.size.x, window.size.y)
-	window.egl_surface = egl.CreateWindowSurface(
-		window.egl_display,
+
+	egl.ChooseConfig(state.egl_display, raw_data(config_attribs), &config, 1, &num_config)
+	state.egl_context = egl.CreateContext(state.egl_display, config, nil, nil)
+	state.egl_window = wl.egl_window_create(state.surface, 1280, 720)
+	state.egl_surface = egl.CreateWindowSurface(
+		state.egl_display,
 		config,
-		cast(egl.NativeWindowType)window.egl_window,
+		cast(egl.NativeWindowType)state.egl_window,
 		nil,
 	)
-	wl.surface_commit(window.surface)
-	egl.MakeCurrent(window.egl_display, window.egl_surface, window.egl_surface, window.egl_context)
-	gl.load_up_to(4, 6, egl.gl_set_proc_address)
-	window.instance = libdecor.new(window.display, &iface)
-	window.frame = libdecor.decorate(window.instance, window.surface, &frame_iface, nil)
-	libdecor.frame_set_app_id(window.frame, "odin-wayland-egl")
-	libdecor.frame_set_title(window.frame, "Hellope from Wayland, EGL & libdecor!")
-	libdecor.frame_map(window.frame)
-	wl.display_dispatch(window.display)
-	// It requires calling it two times to get a configure event
-	wl.display_dispatch(window.display)
-	for wl.display_dispatch_pending(window.display) != -1 {
-		gl.ClearColor(1.0, 0.0, 0.0, 1.0)
+	wl.surface_commit(state.surface)
+	egl.MakeCurrent(state.egl_display, state.egl_surface, state.egl_surface, state.egl_context)
+	gl.load_up_to(4, 5, egl.gl_set_proc_address)
+
+	// Create shader program for triangle
+	vertex_shader := gl.CreateShader(gl.VERTEX_SHADER)
+	gl.ShaderSource(vertex_shader, 1, &VERTEX, nil)
+	gl.CompileShader(vertex_shader)
+
+	fragment_shader := gl.CreateShader(gl.FRAGMENT_SHADER)
+	gl.ShaderSource(fragment_shader, 1, &FRAGMENT, nil)
+	gl.CompileShader(fragment_shader)
+
+	shader_program := gl.CreateProgram()
+	gl.AttachShader(shader_program, vertex_shader)
+	gl.AttachShader(shader_program, fragment_shader)
+	gl.LinkProgram(shader_program)
+
+	// Triangle vertices
+	vertices := []f32 {
+		-0.5,
+		-0.5, // bottom left
+		0.5,
+		-0.5, // bottom right
+		0.0,
+		0.5, // top center
+	}
+
+	vao: u32
+	vbo: u32
+	gl.GenVertexArrays(1, &vao)
+	gl.GenBuffers(1, &vbo)
+
+	gl.BindVertexArray(vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices) * size_of(f32), raw_data(vertices), gl.STATIC_DRAW)
+	gl.VertexAttribPointer(0, 2, gl.FLOAT, gl.FALSE, 2 * size_of(f32), 0)
+	gl.EnableVertexAttribArray(0)
+
+	state.instance = libdecor.new(state.display, &interface)
+	state.frame = libdecor.decorate(state.instance, state.surface, &frame_interface, nil)
+	libdecor.frame_set_app_id(state.frame, "widgets")
+	libdecor.frame_set_title(state.frame, "widgets")
+	libdecor.frame_map(state.frame)
+	wl.display_dispatch(state.display)
+	wl.display_dispatch(state.display)
+	for wl.display_dispatch_pending(state.display) != -1 {
+		gl.ClearColor(0, 0, 1, 1.0)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
-		egl.SwapBuffers(window.egl_display, window.egl_surface)
+
+		// Draw triangle
+		gl.UseProgram(shader_program)
+		gl.BindVertexArray(vao)
+		gl.DrawArrays(gl.TRIANGLES, 0, 3)
+
+		egl.SwapBuffers(state.egl_display, state.egl_surface)
 	}
 }
