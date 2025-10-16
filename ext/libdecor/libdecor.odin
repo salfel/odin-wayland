@@ -444,4 +444,3 @@ foreign libdecor_lib {
 	configuration_get_window_state :: proc(configuration: ^configuration, window_state: ^window_state) -> bool ---
 
 }
-

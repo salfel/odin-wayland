@@ -3643,5 +3643,3 @@ foreign wl_lib {
 	proxy_get_class :: proc(p: ^proxy) -> ^u8 ---
 	proxy_set_queue :: proc(p: ^proxy, queue: ^event_queue) ---
 }
-
-

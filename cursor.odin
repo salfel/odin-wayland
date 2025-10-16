@@ -2,19 +2,19 @@ package wayland
 foreign import wl_cursor_lib "system:wayland-cursor"
 
 
-cursor_theme :: struct{}
+cursor_theme :: struct {}
 
 
 /** A still image part of a cursor
  *
  * Use `cursor_image_get_buffer()` to get the corresponding `struct
  * buffer` to attach to your `struct surface`. */
-cursor_image  :: struct {
+cursor_image :: struct {
 	/** Actual width */
-	width: u32,
+	width:     u32,
 
 	/** Actual height */
-	height: u32,
+	height:    u32,
 
 	/** Hot spot x (must be inside image) */
 	hotspot_x: u32,
@@ -23,7 +23,7 @@ cursor_image  :: struct {
 	hotspot_y: u32,
 
 	/** Animation delay to next frame (ms) */
-	delay: u32,
+	delay:     u32,
 }
 
 /** A cursor, as returned by `cursor_theme_get_cursor()` */
@@ -32,14 +32,14 @@ cursor :: struct {
 	image_count: uint,
 
 	/** The array of still images composing this animation */
-	images: [^]^cursor_image,
+	images:      [^]^cursor_image,
 
 	/** The name of this cursor */
-	name: cstring,
+	name:        cstring,
 }
 
-@(default_calling_convention="c")
-@(link_prefix="wl_")
+@(default_calling_convention = "c")
+@(link_prefix = "wl_")
 foreign wl_cursor_lib {
 	cursor_theme_load :: proc(name: cstring, size: int, shm: ^shm) -> ^cursor_theme ---
 
