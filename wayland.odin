@@ -2657,8 +2657,8 @@ keyboard_add_listener :: proc "contextless" (keyboard_: ^keyboard, listener: ^ke
 /* This specifies the format of the keymap provided to the
 	client with the wl_keyboard.keymap event. */
 keyboard_keymap_format :: enum {
-	no_keymap = 0,
-	xkb_v1    = 1,
+	NO_KEYMAP = 0,
+	XKB_V1    = 1,
 }
 /* Describes the physical state of a key that produced the key event.
 
@@ -2670,9 +2670,9 @@ keyboard_keymap_format :: enum {
 	state and before entering the released state. This event may be
 	generated multiple times while the key is down. */
 keyboard_key_state :: enum {
-	released = 0,
-	pressed  = 1,
-	repeated = 2,
+	RELEASED = 0,
+	PRESSED  = 1,
+	REPEATED = 2,
 }
 @(private)
 keyboard_requests := []message{{"release", "3", raw_data(wayland_types)[0:]}}
