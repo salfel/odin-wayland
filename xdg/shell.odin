@@ -125,13 +125,13 @@ wm_base_add_listener :: proc "contextless" (wm_base_: ^wm_base, listener: ^wm_ba
 }
 /*  */
 wm_base_error :: enum {
-	role                  = 0,
-	defunct_surfaces      = 1,
-	not_the_topmost_popup = 2,
-	invalid_popup_parent  = 3,
-	invalid_surface_state = 4,
-	invalid_positioner    = 5,
-	unresponsive          = 6,
+	Role                  = 0,
+	Defunct_Surfaces      = 1,
+	Not_The_Topmost_Popup = 2,
+	Invalid_Popup_Parent  = 3,
+	Invalid_Surface_State = 4,
+	Invalid_Positioner    = 5,
+	Unresponsive          = 6,
 }
 @(private)
 wm_base_requests := []message {
@@ -379,31 +379,31 @@ positioner_set_parent_configure :: proc "contextless" (positioner_: ^positioner,
 
 /*  */
 positioner_error :: enum {
-	invalid_input = 0,
+	Invalid_Input = 0,
 }
 /*  */
 positioner_anchor :: enum {
-	none         = 0,
-	top          = 1,
-	bottom       = 2,
-	left         = 3,
-	right        = 4,
-	top_left     = 5,
-	bottom_left  = 6,
-	top_right    = 7,
-	bottom_right = 8,
+	None         = 0,
+	Top          = 1,
+	Bottom       = 2,
+	Left         = 3,
+	Right        = 4,
+	Top_Left     = 5,
+	Bottom_Left  = 6,
+	Top_Right    = 7,
+	Bottom_Right = 8,
 }
 /*  */
 positioner_gravity :: enum {
-	none         = 0,
-	top          = 1,
-	bottom       = 2,
-	left         = 3,
-	right        = 4,
-	top_left     = 5,
-	bottom_left  = 6,
-	top_right    = 7,
-	bottom_right = 8,
+	None         = 0,
+	Top          = 1,
+	Bottom       = 2,
+	Left         = 3,
+	Right        = 4,
+	Top_Left     = 5,
+	Bottom_Left  = 6,
+	Top_Right    = 7,
+	Bottom_Right = 8,
 }
 /* The constraint adjustment value define ways the compositor will adjust
 	the position of the surface, if the unadjusted position would result
@@ -417,13 +417,13 @@ positioner_gravity :: enum {
 	The adjustments can be combined, according to a defined precedence: 1)
 	Flip, 2) Slide, 3) Resize. */
 positioner_constraint_adjustment :: enum {
-	none     = 0,
-	slide_x  = 1,
-	slide_y  = 2,
-	flip_x   = 4,
-	flip_y   = 8,
-	resize_x = 16,
-	resize_y = 32,
+	None     = 0,
+	Slide_x  = 1,
+	Slide_y  = 2,
+	Flip_x   = 4,
+	Flip_y   = 8,
+	Resize_x = 16,
+	Resize_y = 32,
 }
 @(private)
 positioner_requests := []message {
@@ -667,12 +667,12 @@ surface_add_listener :: proc "contextless" (surface_: ^surface, listener: ^surfa
 }
 /*  */
 surface_error :: enum {
-	not_constructed     = 1,
-	already_constructed = 2,
-	unconfigured_buffer = 3,
-	invalid_serial      = 4,
-	invalid_size        = 5,
-	defunct_role_object = 6,
+	Not_Constructed     = 1,
+	Already_Constructed = 2,
+	Unconfigured_Buffer = 3,
+	Invalid_Serial      = 4,
+	Invalid_Size        = 5,
+	Defunct_Role_Object = 6,
 }
 @(private)
 surface_requests := []message {
@@ -1235,22 +1235,22 @@ toplevel_add_listener :: proc "contextless" (toplevel_: ^toplevel, listener: ^to
 }
 /*  */
 toplevel_error :: enum {
-	invalid_resize_edge = 0,
-	invalid_parent      = 1,
-	invalid_size        = 2,
+	Invalid_Resize_Edge = 0,
+	Invalid_Parent      = 1,
+	Invalid_Size        = 2,
 }
 /* These values are used to indicate which edge of a surface
 	is being dragged in a resize operation. */
 toplevel_resize_edge :: enum {
-	none         = 0,
-	top          = 1,
-	bottom       = 2,
-	left         = 4,
-	top_left     = 5,
-	bottom_left  = 6,
-	right        = 8,
-	top_right    = 9,
-	bottom_right = 10,
+	None         = 0,
+	Top          = 1,
+	Bottom       = 2,
+	Left         = 4,
+	Top_Left     = 5,
+	Bottom_Left  = 6,
+	Right        = 8,
+	Top_Right    = 9,
+	Bottom_Right = 10,
 }
 /* The different state values used on the surface. This is designed for
 	state values like maximized, fullscreen. It is paired with the
@@ -1259,26 +1259,26 @@ toplevel_resize_edge :: enum {
 
 	States set in this way are double-buffered, see wl_surface.commit. */
 toplevel_state :: enum {
-	maximized          = 1,
-	fullscreen         = 2,
-	resizing           = 3,
-	activated          = 4,
-	tiled_left         = 5,
-	tiled_right        = 6,
-	tiled_top          = 7,
-	tiled_bottom       = 8,
-	suspended          = 9,
-	constrained_left   = 10,
-	constrained_right  = 11,
-	constrained_top    = 12,
-	constrained_bottom = 13,
+	Maximized          = 1,
+	Fullscreen         = 2,
+	Resizing           = 3,
+	Activated          = 4,
+	Tiled_Left         = 5,
+	Tiled_Right        = 6,
+	Tiled_Top          = 7,
+	Tiled_Bottom       = 8,
+	Suspended          = 9,
+	Constrained_Left   = 10,
+	Constrained_Right  = 11,
+	Constrained_Top    = 12,
+	Constrained_Bottom = 13,
 }
 /*  */
 toplevel_wm_capabilities :: enum {
-	window_menu = 1,
-	maximize    = 2,
-	fullscreen  = 3,
-	minimize    = 4,
+	Window_Menu = 1,
+	Maximize    = 2,
+	Fullscreen  = 3,
+	Minimize    = 4,
 }
 @(private)
 toplevel_requests := []message {
@@ -1471,7 +1471,7 @@ popup_add_listener :: proc "contextless" (popup_: ^popup, listener: ^popup_liste
 }
 /*  */
 popup_error :: enum {
-	invalid_grab = 0,
+	Invalid_Grab = 0,
 }
 @(private)
 popup_requests := []message {
