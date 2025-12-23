@@ -70,6 +70,7 @@ Argument :: struct {
 	nullable:       bool,
 	interface_name: string,
 	enum_name:      string, // If type is enum
+	is_argument:    bool,
 
 	// TODO: summary
 }
@@ -188,11 +189,13 @@ parse_procedure :: proc(
 			procedure.all_null = false
 		}
 
-		if arg.type == .New_Id && interface_found {
+		if arg.type == .New_Id && type == .Request && interface_found {
 			procedure.ret = arg
 		} else {
 			if arg.type == .New_Id {
+				log.debug("\t\t", "New_id:", arg)
 				procedure.new_id = arg
+				arg.is_argument = true
 			}
 			append(&args, arg)
 		}
@@ -260,7 +263,7 @@ get_argument_text :: proc(arg: Argument) -> string {
 	case .New_Id:
 		if arg.interface_name != "" {
 			forward_text = fmt.aprintf("^%v", arg.interface_name)
-			ret = true
+			ret = !arg.is_argument
 		} else {
 			forward_text = "^interface, version: uint"
 		}
